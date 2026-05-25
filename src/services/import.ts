@@ -1,47 +1,42 @@
-import { toaster } from "@/components/ui/toaster";
-
-export const parseFiles = async (nextFiles: File[]) => {
-  if (!nextFiles.length) return;
-
-  const parseFile = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await fetch("http://localhost:8000/parse", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const message = await response.text().catch(() => "");
-      throw new Error(message || `Failed to parse ${file.name}`);
-    }
-  };
-
-  const results = await Promise.allSettled(nextFiles.map(parseFile));
-  const failed = results
-    .map((result, index) => ({ result, file: nextFiles[index] }))
-    .filter(({ result }) => result.status === "rejected")
-    .map(({ file }) => file.name);
-
-  if (failed.length) {
-    toaster.create({
-      type: "error",
-      title: "Parse failed",
-      description: `Failed to parse: ${failed.join(", ")}`,
-      duration: 4500,
-      meta: { closable: true },
-    });
-  }
-
-  if (failed.length !== nextFiles.length) {
-    const successCount = nextFiles.length - failed.length;
-    toaster.create({
-      type: "success",
-      title: "Parse complete",
-      description: `${successCount} file${successCount === 1 ? "" : "s"} parsed`,
-      duration: 3500,
-      meta: { closable: true },
-    });
-  }
+export type ImportJobResponse = {
+  job_id: string;
+  status: string;
+  current_step: string | null;
+  status_url: string;
+  events_url: string;
 };
+
+export type ImportJobEvent = ImportJobResponse & {
+  error_message?: string | null;
+};
+
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+export async function uploadImportFile(file: File): Promise<ImportJobResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/agents/process-file`, {
+    method: "POST",
+    headers: {
+      "Idempotency-Key": crypto.randomUUID(),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => "");
+    throw new Error(message || `Upload failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function fetchImportJob(statusUrl: string): Promise<ImportJobEvent> {
+  const response = await fetch(`${API_BASE_URL}${statusUrl}`);
+  if (!response.ok) {
+    throw new Error(`Status check failed with status ${response.status}`);
+  }
+
+  return response.json();
+}

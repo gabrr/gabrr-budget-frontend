@@ -8,12 +8,12 @@ export default function Home() {
   return (
     <Container py={16} centerContent gap={6}>
       <Heading>Gabrr Budget AI</Heading>
-      <NextLink href="/import">
-        <Button as="a" color="AccentColor" size="md">
+      <Button asChild color="AccentColor" size="md">
+        <NextLink href="/import">
           Import
           <SmallAddIcon />
-        </Button>
-      </NextLink>
+        </NextLink>
+      </Button>
     </Container>
   );
 }
