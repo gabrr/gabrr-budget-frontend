@@ -28,25 +28,25 @@ const bucketStyles: Record<
   }
 > = {
   income: {
-    dot: "#3f7a5b",
+    dot: "success",
     background: "chip.bg",
     border: "chip.border",
     color: "chip.text",
   },
   debt_installment: {
-    dot: "#94544a",
+    dot: "danger",
     background: "chip.bg",
     border: "chip.border",
     color: "chip.text",
   },
   fixed_cost: {
-    dot: "#466a8a",
+    dot: "accent.blueHover",
     background: "chip.bg",
     border: "chip.border",
     color: "chip.text",
   },
   living_cost: {
-    dot: "#9a7a30",
+    dot: "warning",
     background: "chip.bg",
     border: "chip.border",
     color: "chip.text",

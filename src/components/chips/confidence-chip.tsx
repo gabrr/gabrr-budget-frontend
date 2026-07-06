@@ -5,42 +5,56 @@ import type { TransactionChipClickHandler } from "./types";
 
 type ConfidenceChipProps = {
   value: number;
+  label?: string;
   onClick?: TransactionChipClickHandler;
 };
 
 type ConfidenceLevel = "low" | "medium" | "high";
+
+const donutRingMask = {
+  WebkitMask: "radial-gradient(farthest-side, transparent 54%, #000 56%)",
+  mask: "radial-gradient(farthest-side, transparent 54%, #000 56%)",
+};
 
 const confidenceStyles: Record<
   ConfidenceLevel,
   {
     label: string;
     fill: string;
+    background: string;
   }
 > = {
   low: {
     label: "Low",
-    fill: "#94544a",
+    fill: "danger",
+    background: "dangerSoft",
   },
   medium: {
     label: "Medium",
-    fill: "#9a7a30",
+    fill: "warning",
+    background: "warningSoft",
   },
   high: {
     label: "High",
-    fill: "#3f7a5b",
+    fill: "success",
+    background: "successSoft",
   },
 };
 
-export function ConfidenceChip({ value, onClick }: ConfidenceChipProps) {
+export function ConfidenceChip({ value, label, onClick }: ConfidenceChipProps) {
   const percent = toPercent(value);
   const level = getConfidenceLevel(value);
   const style = confidenceStyles[level];
   const isButton = Boolean(onClick);
+  const displayLabel = label ?? style.label;
   const content = (
     <>
-      <ConfidenceDonut fill={style.fill} percent={percent} />
+      <ConfidenceDonut
+        fill={style.fill}
+        percent={percent}
+      />
       <Text as="span">
-        {style.label} {percent}%
+        {displayLabel} {percent}%
       </Text>
     </>
   );
@@ -49,11 +63,11 @@ export function ConfidenceChip({ value, onClick }: ConfidenceChipProps) {
     <Flex
       align="center"
       asChild
-      bg="chip.bg"
+      bg={style.background}
       borderColor="chip.border"
       borderRadius="999px"
       borderWidth="1px"
-      color="chip.text"
+      color={style.fill}
       cursor={isButton ? "pointer" : "default"}
       display="inline-flex"
       fontSize="10.5px"
@@ -68,14 +82,15 @@ export function ConfidenceChip({ value, onClick }: ConfidenceChipProps) {
         isButton
           ? {
               borderColor: "chip.borderHover",
-              bg: "chip.bgHover",
+              bg: style.background,
             }
           : undefined
       }
       _focusVisible={
         isButton
           ? {
-              outline: "3px solid rgba(49, 95, 85, 0.24)",
+              outline: "2px solid",
+              outlineColor: "accent.blue",
               outlineOffset: "2px",
             }
           : undefined
@@ -102,7 +117,6 @@ function ConfidenceDonut({
   return (
     <Box
       aria-hidden="true"
-      bg="grid.line"
       borderRadius="full"
       flex="0 0 12px"
       h="12px"
@@ -110,16 +124,19 @@ function ConfidenceDonut({
       w="12px"
     >
       <Box
-        bg={`conic-gradient(${fill} ${percent * 3.6}deg, transparent 0deg)`}
+        bg="grid.line"
         borderRadius="full"
         inset="0"
         position="absolute"
+        style={donutRingMask}
       />
       <Box
-        bg="chip.bg"
+        bg={`conic-gradient(currentColor 0deg ${percent * 3.6}deg, transparent ${percent * 3.6}deg 360deg)`}
         borderRadius="full"
-        inset="3px"
+        color={fill}
+        inset="0"
         position="absolute"
+        style={donutRingMask}
       />
     </Box>
   );

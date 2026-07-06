@@ -77,7 +77,8 @@ export function ChipShell({
       _focusVisible={
         isButton
           ? {
-              outline: "3px solid rgba(49, 95, 85, 0.24)",
+              outline: "2px solid",
+              outlineColor: "accent.blue",
               outlineOffset: "2px",
             }
           : undefined

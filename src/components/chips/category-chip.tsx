@@ -26,17 +26,17 @@ const categoryLabels: Record<CategoryChipValue, string> = {
 };
 
 const categoryColors: Record<CategoryChipValue, string> = {
-  food: "#b68a35",
-  transportation: "#597b98",
-  health: "#4f8a68",
-  leisure: "#9b6b5e",
+  food: "warning",
+  transportation: "accent.blueHover",
+  health: "success",
+  leisure: "danger",
   needs: "#7a838a",
   fun: "#9b7182",
   donations: "#776a9f",
   clothing: "#a77b54",
-  renting: "#95794d",
-  home: "#788a58",
-  company: "#56707b",
+  renting: "warning",
+  home: "success",
+  company: "accent.blueHover",
   others: "#9aa09d",
 };
 
