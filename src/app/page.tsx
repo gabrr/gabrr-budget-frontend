@@ -1,19 +1,39 @@
 "use client";
 
-import { SmallAddIcon } from "@chakra-ui/icons";
-import { Button, Container, Heading } from "@chakra-ui/react";
-import NextLink from "next/link";
+import { Box, Button, Container, Heading } from "@chakra-ui/react";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <Container py={16} centerContent gap={6}>
-      <Heading>Gabrr Budget AI</Heading>
-      <Button asChild color="AccentColor" size="md">
-        <NextLink href="/import">
-          Import
-          <SmallAddIcon />
-        </NextLink>
-      </Button>
-    </Container>
+    <Box as="main" layerStyle="page">
+      <Container p={8}>
+        <Heading as={"h1"} textStyle="pageTitle">
+          Home
+        </Heading>
+
+        <Box
+          mt="8"
+          display="flex"
+          flexDirection="row"
+          gap="4"
+          maxWidth={300}
+          alignItems={"center"}
+        >
+          <Button asChild>
+            <Link href={"/"}>Home</Link>
+          </Button>
+
+          <Button asChild>
+            <Link href="/dashboard">Dashboard</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/import">Import</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/processes">Processes</Link>
+          </Button>
+        </Box>
+      </Container>
+    </Box>
   );
 }
