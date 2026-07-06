@@ -18,12 +18,12 @@ type ChipShellProps = {
 
 export function ChipShell({
   children,
-  dotColor = "#a4aaa7",
+  dotColor = "text.tertiary",
   icon,
-  borderColor = "#dfe5e1",
+  borderColor = "chip.border",
   borderStyle = "solid",
-  background = "#fff",
-  color = "#454d49",
+  background = "chip.bg",
+  color = "chip.text",
   label,
   onClick,
 }: ChipShellProps) {
@@ -69,8 +69,8 @@ export function ChipShell({
       _hover={
         isButton
           ? {
-              borderColor: "#c9d2cd",
-              bg: "#fbfcfb",
+              borderColor: "chip.borderHover",
+              bg: "chip.bgHover",
             }
           : undefined
       }

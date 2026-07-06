@@ -136,21 +136,21 @@ export default function ImportPage() {
     <Container maxW="3xl" py={10}>
       <VStack w="full" align="stretch" gap={6}>
         <Box>
-          <Text fontSize="2xl" fontWeight="bold">
+          <Text as="h1" textStyle="pageTitle">
             PDF import job test
           </Text>
-          <Text color="gray.600" mt={2}>
+          <Text color="text.secondary" mt={2}>
             Select {EXAMPLE_FILE_PATH} and watch job events print below.
           </Text>
           {lastJob && (
-            <Text color="gray.600" mt={2} fontSize="sm">
+            <Text color="text.secondary" mt={2} fontSize="sm">
               Last job: {lastJob.job_id} · {lastJob.status}
               {lastJob.current_step ? ` · ${lastJob.current_step}` : ""}
             </Text>
           )}
         </Box>
 
-        <Box borderWidth="1px" borderColor="gray.200" rounded="md" p={5}>
+        <Box layerStyle="panel">
           <VStack align="stretch" gap={4}>
             <Input
               type="file"
@@ -158,7 +158,7 @@ export default function ImportPage() {
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
             />
             <Button
-              colorScheme="teal"
+              colorPalette="blue"
               onClick={uploadExample}
               loading={isUploading}
             >
@@ -168,10 +168,7 @@ export default function ImportPage() {
         </Box>
 
         <Box
-          borderWidth="1px"
-          borderColor="gray.200"
-          rounded="md"
-          p={5}
+          layerStyle="panel"
           minH="260px"
         >
           <Text fontWeight="semibold" mb={3}>

@@ -8,7 +8,7 @@ import {
   ConfidenceChip,
   bucketChipValues,
   categoryChipValues,
-} from "@/components/ui/chips";
+} from "@/components/chips";
 
 const confidenceSamples = [0.86, 0.62, 0.42];
 
@@ -26,25 +26,21 @@ export default function CatalogPage() {
             <Stack gap="2">
               <Heading
                 as="h1"
-                color="#141a18"
-                fontSize={{ base: "30px", md: "42px" }}
-                fontWeight="740"
-                letterSpacing="0"
-                lineHeight="1.04"
+                textStyle="pageTitle"
               >
                 Transaction chip catalog
               </Heading>
-              <Text color="#69736f" fontSize="14px" lineHeight="1.45" maxW="720px">
+              <Text textStyle="subtitle" maxW="720px">
                 Category, bucket, and confidence chips for transaction review.
               </Text>
             </Stack>
 
             <Box
-              bg="#fff"
-              borderColor="#dfe5e1"
+              bg="bg.surface"
+              borderColor="border.subtle"
               borderRadius="999px"
               borderWidth="1px"
-              color="#69736f"
+              color="text.secondary"
               fontSize="12px"
               fontWeight="720"
               minH="34px"
@@ -103,20 +99,14 @@ function CatalogPanel({
   return (
     <Stack
       as="section"
-      bg="rgba(255, 255, 255, 0.9)"
-      borderColor="#e1e5e2"
+      bg="bg.surface"
+      borderColor="border.subtle"
       borderRadius="18px"
       borderWidth="1px"
       gap="4"
       p={{ base: "4", md: "5" }}
     >
-      <Heading
-        as="h2"
-        color="#141a18"
-        fontSize="16px"
-        fontWeight="780"
-        letterSpacing="0"
-      >
+      <Heading as="h2" textStyle="panelTitle">
         {title}
       </Heading>
       {children}

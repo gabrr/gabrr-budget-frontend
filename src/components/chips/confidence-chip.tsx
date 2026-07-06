@@ -15,27 +15,19 @@ const confidenceStyles: Record<
   {
     label: string;
     fill: string;
-    border: string;
-    color: string;
   }
 > = {
   low: {
     label: "Low",
     fill: "#94544a",
-    border: "#e5d7d4",
-    color: "#4f403c",
   },
   medium: {
     label: "Medium",
     fill: "#9a7a30",
-    border: "#e4dcc2",
-    color: "#4f4736",
   },
   high: {
     label: "High",
     fill: "#3f7a5b",
-    border: "#d6e2db",
-    color: "#42514b",
   },
 };
 
@@ -57,11 +49,11 @@ export function ConfidenceChip({ value, onClick }: ConfidenceChipProps) {
     <Flex
       align="center"
       asChild
-      bg="#fff"
-      borderColor={style.border}
+      bg="chip.bg"
+      borderColor="chip.border"
       borderRadius="999px"
       borderWidth="1px"
-      color={style.color}
+      color="chip.text"
       cursor={isButton ? "pointer" : "default"}
       display="inline-flex"
       fontSize="10.5px"
@@ -75,8 +67,8 @@ export function ConfidenceChip({ value, onClick }: ConfidenceChipProps) {
       _hover={
         isButton
           ? {
-              borderColor: "#c9d2cd",
-              bg: "#fbfcfb",
+              borderColor: "chip.borderHover",
+              bg: "chip.bgHover",
             }
           : undefined
       }
@@ -110,20 +102,26 @@ function ConfidenceDonut({
   return (
     <Box
       aria-hidden="true"
-      bg={`conic-gradient(${fill} ${percent * 3.6}deg, #e7ece9 0deg)`}
+      bg="grid.line"
       borderRadius="full"
       flex="0 0 12px"
       h="12px"
       position="relative"
       w="12px"
-      _after={{
-        bg: "#fff",
-        borderRadius: "full",
-        content: '""',
-        inset: "3px",
-        position: "absolute",
-      }}
-    />
+    >
+      <Box
+        bg={`conic-gradient(${fill} ${percent * 3.6}deg, transparent 0deg)`}
+        borderRadius="full"
+        inset="0"
+        position="absolute"
+      />
+      <Box
+        bg="chip.bg"
+        borderRadius="full"
+        inset="3px"
+        position="absolute"
+      />
+    </Box>
   );
 }
 

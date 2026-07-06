@@ -27,6 +27,9 @@ export default function Home() {
             <Link href="/dashboard">Dashboard</Link>
           </Button>
           <Button asChild>
+            <Link href="/catalog">Catalog</Link>
+          </Button>
+          <Button asChild>
             <Link href="/import">Import</Link>
           </Button>
           <Button asChild>

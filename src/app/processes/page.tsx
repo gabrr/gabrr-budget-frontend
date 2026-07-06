@@ -25,7 +25,7 @@ function isActiveJob(job: ImportJobEvent): boolean {
 }
 
 function statusBadgeStyle(status: ImportJobEvent["status"]) {
-  if (status === "done") return { bg: "successSoft", color: "#1f7a3a" };
+  if (status === "done") return { bg: "successSoft", color: "success" };
   if (status === "failed") return { bg: "dangerSoft", color: "danger" };
   if (status === "pending") return { bg: "warningSoft", color: "warning" };
   return { bg: "accent.blueSoft", color: "accent.blueHover" };
