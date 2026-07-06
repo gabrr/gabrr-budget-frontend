@@ -13,6 +13,10 @@ import {
   ImportTimeline,
   type ImportTimelineJob,
 } from "@/components/ledger/import-timeline";
+import {
+  TransactionList,
+  type TransactionListItem,
+} from "@/components/ledger/transaction-list";
 
 const confidenceSamples = [0.86, 0.62, 0.42];
 const mockImportJobs = [
@@ -77,6 +81,122 @@ const mockImportJobs = [
     finished_at: "2026-04-02T09:14:10-03:00",
   },
 ] satisfies ImportTimelineJob[];
+
+const mockTransactions = [
+  {
+    id: "tx_sweetgreen",
+    import_job_id: "job_inter_april",
+    posted_at: "2026-04-30",
+    date: "2026-04-30",
+    description: "Lunch near office",
+    merchant_name: "Sweetgreen",
+    merchant: "Sweetgreen",
+    amount: "-42.80",
+    currency: "USD",
+    category: "food",
+    report_bucket: "living_cost",
+    classification_source: "agent",
+    classification_confidence: "0.86",
+    classification_reason:
+      "Bucket set to living_cost because this merchant matches prior lunch transactions and is not recurring.",
+    is_draft: true,
+    transaction_nature: "expense",
+  },
+  {
+    id: "tx_uber",
+    import_job_id: "job_inter_april",
+    posted_at: "2026-04-30",
+    date: "2026-04-30",
+    description: "Airport ride",
+    merchant_name: "Uber",
+    merchant: "Uber",
+    amount: "-31.20",
+    currency: "USD",
+    category: "transportation",
+    report_bucket: "living_cost",
+    classification_source: "system",
+    classification_confidence: 0.62,
+    classification_reason:
+      "Bucket set to living_cost because ride-share charges are variable transportation expenses and match the saved Uber rule.",
+    is_draft: true,
+    transaction_nature: "expense",
+  },
+  {
+    id: "tx_pix",
+    import_job_id: "job_inter_april",
+    posted_at: "2026-04-29",
+    date: "2026-04-29",
+    description: "Statement text: PIX ENVIADO GABRIEL",
+    merchant_name: "Unknown PIX Transfer",
+    merchant: null,
+    amount: "-180.00",
+    currency: "USD",
+    category: "others",
+    report_bucket: "unknown",
+    classification_source: "agent",
+    classification_confidence: "0.42",
+    classification_reason:
+      "Bucket is unknown because the PIX descriptor does not match a saved merchant rule, recurring pattern, or known transfer relationship.",
+    is_draft: true,
+    transaction_nature: "transfer",
+  },
+  {
+    id: "tx_netflix",
+    import_job_id: "job_inter_april",
+    posted_at: "2026-04-28",
+    date: "2026-04-28",
+    description: "Monthly streaming subscription",
+    merchant_name: "Netflix",
+    merchant: "Netflix",
+    amount: "-19.90",
+    currency: "USD",
+    category: "leisure",
+    report_bucket: "fixed_cost",
+    classification_source: "system",
+    classification_confidence: "0.94",
+    classification_reason:
+      "Bucket set to fixed_cost because Netflix repeats monthly with a stable amount and matches an existing subscription rule.",
+    is_draft: true,
+    transaction_nature: "expense",
+  },
+  {
+    id: "tx_payroll",
+    import_job_id: "job_inter_april",
+    posted_at: "2026-04-28",
+    date: "2026-04-28",
+    description: "Monthly salary deposit",
+    merchant_name: "Acme Payroll",
+    merchant: "Acme Payroll",
+    amount: "4500.00",
+    currency: "USD",
+    category: "company",
+    report_bucket: "income",
+    classification_source: "user",
+    classification_confidence: "0.98",
+    classification_reason:
+      "Bucket set to income because the transaction is a recurring payroll deposit from a recognized employer.",
+    is_draft: true,
+    transaction_nature: "income",
+  },
+  {
+    id: "tx_missing",
+    import_job_id: "job_inter_april",
+    posted_at: null,
+    date: null,
+    description: null,
+    merchant_name: null,
+    merchant: null,
+    amount: null,
+    currency: "USD",
+    category: null,
+    report_bucket: "excluded",
+    classification_source: "system",
+    classification_confidence: null,
+    classification_reason: null,
+    is_draft: true,
+    transaction_nature: "unknown",
+  },
+] satisfies TransactionListItem[];
 
 export default function CatalogPage() {
   return (
@@ -162,6 +282,23 @@ export default function CatalogPage() {
             <Stack gap="4">
               <ImportTimeline jobs={[]} emptyLabel="No statement imports yet." />
               <ImportTimeline jobs={mockImportJobs} isLoading />
+            </Stack>
+          </CatalogPanel>
+
+          <CatalogPanel title="Transaction List">
+            <TransactionList
+              transactions={mockTransactions}
+              defaultOpenTransactionId="tx_sweetgreen"
+            />
+          </CatalogPanel>
+
+          <CatalogPanel title="Transaction List States">
+            <Stack gap="4">
+              <TransactionList
+                transactions={[]}
+                emptyLabel="No draft transactions for this import yet."
+              />
+              <TransactionList transactions={mockTransactions} isLoading />
             </Stack>
           </CatalogPanel>
         </Stack>
