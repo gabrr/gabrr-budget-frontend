@@ -6,6 +6,7 @@ import {
   type ImportTimelineStatementKind,
   type ImportTimelineStatus,
 } from "@/components/ledger/import-timeline";
+import { SectionCard } from "@/components/ui/section-card";
 import {
   TransactionList,
   type TransactionClassificationSource,
@@ -36,7 +37,6 @@ import {
   Grid,
   Heading,
   Stack,
-  Text,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -102,8 +102,7 @@ export default function ProcessesPage() {
   const [isJobsLoading, setIsJobsLoading] = useState(true);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [watchingJobId, setWatchingJobId] = useState<string | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const eventSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const isMountedRef = useRef(false);
   const selectedJobIdRef = useRef<string | null>(null);
   const transactionsRequestRef = useRef(0);
@@ -154,6 +153,92 @@ export default function ProcessesPage() {
     }
   }, []);
 
+  const updateJob = useCallback((update: ImportJobEvent) => {
+    setJobs((currentJobs) => {
+      const hasJob = currentJobs.some((job) => job.job_id === update.job_id);
+      if (!hasJob) return [update, ...currentJobs];
+
+      return currentJobs.map((job) =>
+        job.job_id === update.job_id ? update : job,
+      );
+    });
+  }, []);
+
+  const closeJobWatch = useCallback((jobId: string) => {
+    const eventSource = eventSourcesRef.current.get(jobId);
+    if (!eventSource) return;
+
+    eventSource.close();
+    eventSourcesRef.current.delete(jobId);
+  }, []);
+
+  const closeInactiveWatches = useCallback((nextJobs: ImportJobEvent[]) => {
+    const activeJobIds = new Set(
+      nextJobs.filter(isActiveJob).map((job) => job.job_id),
+    );
+
+    for (const [jobId, eventSource] of eventSourcesRef.current) {
+      if (!activeJobIds.has(jobId)) {
+        eventSource.close();
+        eventSourcesRef.current.delete(jobId);
+      }
+    }
+  }, []);
+
+  const handleTerminalJob = useCallback(
+    (update: ImportJobEvent) => {
+      if (isActiveJob(update)) return;
+
+      closeJobWatch(update.job_id);
+
+      if (selectedJobIdRef.current === update.job_id) {
+        void loadTransactionsForJob(update.job_id);
+      }
+    },
+    [closeJobWatch, loadTransactionsForJob],
+  );
+
+  const watchJob = useCallback(
+    (job: ImportJobEvent) => {
+      if (!isActiveJob(job) || eventSourcesRef.current.has(job.job_id)) {
+        return;
+      }
+
+      const events = new EventSource(`${API_BASE_URL}${job.events_url}`);
+      eventSourcesRef.current.set(job.job_id, events);
+
+      events.addEventListener("progress", (event) => {
+        const update = JSON.parse(event.data) as ImportJobEvent;
+        if (!isMountedRef.current) return;
+
+        updateJob(update);
+        handleTerminalJob(update);
+      });
+
+      events.addEventListener("error", () => {
+        closeJobWatch(job.job_id);
+
+        void fetchImportJob(job.status_url)
+          .then((update) => {
+            if (!isMountedRef.current) return;
+
+            updateJob(update);
+            handleTerminalJob(update);
+          })
+          .catch(() => undefined);
+      });
+    },
+    [closeJobWatch, handleTerminalJob, updateJob],
+  );
+
+  const watchActiveJobs = useCallback(
+    (nextJobs: ImportJobEvent[]) => {
+      closeInactiveWatches(nextJobs);
+      nextJobs.forEach(watchJob);
+    },
+    [closeInactiveWatches, watchJob],
+  );
+
   const loadJobs = useCallback(
     async ({ refreshTransactions = false } = {}) => {
       setIsJobsLoading(true);
@@ -170,6 +255,7 @@ export default function ProcessesPage() {
 
         setJobs(nextJobs);
         setSelectedJobId(nextSelectedJobId);
+        watchActiveJobs(nextJobs);
 
         if (refreshTransactions && !selectedChanged) {
           void loadTransactionsForJob(nextSelectedJobId);
@@ -181,16 +267,19 @@ export default function ProcessesPage() {
         if (isMountedRef.current) setIsJobsLoading(false);
       }
     },
-    [loadTransactionsForJob],
+    [loadTransactionsForJob, watchActiveJobs],
   );
 
   useEffect(() => {
+    const eventSources = eventSourcesRef.current;
+
     isMountedRef.current = true;
     void loadJobs();
 
     return () => {
       isMountedRef.current = false;
-      eventSourceRef.current?.close();
+      eventSources.forEach((eventSource) => eventSource.close());
+      eventSources.clear();
     };
   }, [loadJobs]);
 
@@ -198,57 +287,9 @@ export default function ProcessesPage() {
     void loadTransactionsForJob(selectedJobId);
   }, [loadTransactionsForJob, selectedJobId]);
 
-  const updateJob = (update: ImportJobEvent) => {
-    setJobs((currentJobs) =>
-      currentJobs.map((job) => (job.job_id === update.job_id ? update : job)),
-    );
-  };
-
-  const watchProcess = (job: ImportJobEvent) => {
-    if (!isActiveJob(job)) return;
-
-    eventSourceRef.current?.close();
-    setWatchingJobId(job.job_id);
-
-    const events = new EventSource(`${API_BASE_URL}${job.events_url}`);
-    eventSourceRef.current = events;
-
-    events.addEventListener("progress", (event) => {
-      const update = JSON.parse(event.data) as ImportJobEvent;
-      if (!isMountedRef.current) return;
-      updateJob(update);
-
-      if (!isActiveJob(update)) {
-        events.close();
-        eventSourceRef.current = null;
-        setWatchingJobId(null);
-
-        if (selectedJobIdRef.current === update.job_id) {
-          void loadTransactionsForJob(update.job_id);
-        }
-      }
-    });
-
-    events.addEventListener("error", () => {
-      events.close();
-      eventSourceRef.current = null;
-      setWatchingJobId(null);
-      void fetchImportJob(job.status_url)
-        .then((update) => {
-          if (!isMountedRef.current) return;
-          updateJob(update);
-          if (selectedJobIdRef.current === update.job_id && !isActiveJob(update)) {
-            void loadTransactionsForJob(update.job_id);
-          }
-        })
-        .catch(() => undefined);
-    });
-  };
-
   const selectedJob =
     jobs.find((job) => job.job_id === selectedJobId) ?? null;
   const timelineJobs = jobs.map(toTimelineJob);
-  const selectedJobIsActive = selectedJob !== null && isActiveJob(selectedJob);
 
   return (
     <Box as="main" layerStyle="page">
@@ -261,13 +302,10 @@ export default function ProcessesPage() {
           justify="space-between"
           pb="6"
         >
-          <Stack gap="2">
+          <Stack gap="0">
             <Heading as="h1" textStyle="pageTitle">
               Processes
             </Heading>
-            <Text textStyle="subtitle">
-              Review imported statements and draft transactions.
-            </Text>
           </Stack>
 
           <Flex flexWrap="wrap" gap="3" justify={{ md: "flex-end" }}>
@@ -290,62 +328,44 @@ export default function ProcessesPage() {
           gridTemplateColumns={{ base: "1fr", lg: "repeat(3, minmax(0, 1fr))" }}
           minW="0"
         >
-          <Stack
-            as="section"
-            aria-label="Import timeline"
-            gap="4"
-            gridColumn={{ lg: "span 1" }}
-            layerStyle="panel"
-            minW="0"
-          >
-            <Stack gap="1">
-              <Heading as="h2" textStyle="panelTitle">
-                Import timeline
-              </Heading>
-              <Text color="text.secondary" fontSize="13px" lineHeight="1.4">
-                Select a statement import to review its draft transactions.
-              </Text>
-            </Stack>
+          <Box as="section" aria-label="Import timeline" gridColumn={{ lg: "span 1" }} minW="0">
+            <SectionCard
+              title="Import timeline"
+              subtitle="Select a statement import to review its draft transactions."
+            >
+              <ImportTimeline
+                jobs={timelineJobs}
+                selectedJobId={selectedJobId ?? undefined}
+                onSelectJob={setSelectedJobId}
+                isLoading={isJobsLoading}
+                emptyLabel="No statement imports yet."
+                variant="embedded"
+              />
+            </SectionCard>
+          </Box>
 
-            <ImportTimeline
-              jobs={timelineJobs}
-              selectedJobId={selectedJobId ?? undefined}
-              onSelectJob={setSelectedJobId}
-              isLoading={isJobsLoading}
-              emptyLabel="No statement imports yet."
-            />
-          </Stack>
-
-          <Stack
+          <Box
             as="section"
             aria-label="Selected import transactions"
-            gap="4"
             gridColumn={{ lg: "span 2" }}
-            layerStyle="panel"
             minW="0"
           >
-            <SelectedImportHeader
-              isWatching={watchingJobId === selectedJobId}
-              job={selectedJob}
-              onWatch={
-                selectedJob && selectedJobIsActive
-                  ? () => watchProcess(selectedJob)
-                  : undefined
-              }
-              transactionCount={transactions.length}
-              transactionsTotal={transactionsTotal}
-            />
-
-            <TransactionList
-              transactions={transactions}
-              isLoading={isTransactionsLoading}
-              emptyLabel={
-                selectedJobId
-                  ? "No draft transactions for this import yet."
-                  : "Select an import to review transactions."
-              }
-            />
-          </Stack>
+            <SectionCard
+              eyebrow="Selected file"
+              title={selectedJob?.original_filename || "No import selected"}
+              meta={`${transactionsTotal} total · ${transactions.length} shown`}
+            >
+              <TransactionList
+                transactions={transactions}
+                isLoading={isTransactionsLoading}
+                emptyLabel={
+                  selectedJobId
+                    ? "No draft transactions for this import yet."
+                    : "Select an import to review transactions."
+                }
+              />
+            </SectionCard>
+          </Box>
         </Grid>
 
         {message && (
@@ -355,81 +375,6 @@ export default function ProcessesPage() {
         )}
       </Container>
     </Box>
-  );
-}
-
-function SelectedImportHeader({
-  isWatching,
-  job,
-  onWatch,
-  transactionCount,
-  transactionsTotal,
-}: {
-  isWatching: boolean;
-  job: ImportJobEvent | null;
-  onWatch?: () => void;
-  transactionCount: number;
-  transactionsTotal: number;
-}) {
-  const title = job?.original_filename || "No import selected";
-  const metadata = job
-    ? `${statementKindLabel(job.statement_kind)} · ${job.current_step || job.status}`
-    : "Select an import from the timeline.";
-
-  return (
-    <Flex
-      align={{ base: "stretch", md: "flex-start" }}
-      direction={{ base: "column", md: "row" }}
-      gap="3"
-      justify="space-between"
-    >
-      <Stack gap="2" minW="0">
-        <Text
-          color="text.tertiary"
-          fontSize="10px"
-          fontWeight="820"
-          letterSpacing="0.08em"
-          textTransform="uppercase"
-        >
-          Selected file
-        </Text>
-        <Heading
-          as="h2"
-          color="text.primary"
-          fontSize={{ base: "18px", md: "20px" }}
-          fontWeight="780"
-          letterSpacing="0"
-          lineHeight="1.15"
-          overflow="hidden"
-          textOverflow="ellipsis"
-          whiteSpace="nowrap"
-        >
-          {title}
-        </Heading>
-        <Text color="text.secondary" fontSize="13px" lineHeight="1.4">
-          {metadata}
-        </Text>
-        <Flex color="text.tertiary" fontSize="12px" fontWeight="720" gap="2">
-          <Text as="span">{transactionsTotal} total</Text>
-          <Text as="span">·</Text>
-          <Text as="span">{transactionCount} shown</Text>
-        </Flex>
-      </Stack>
-
-      {onWatch ? (
-        <Button
-          alignSelf={{ base: "flex-start", md: "center" }}
-          disabled={isWatching}
-          minH="32px"
-          px="12px"
-          type="button"
-          variant="outline"
-          onClick={onWatch}
-        >
-          {isWatching ? "Watching" : "Watch"}
-        </Button>
-      ) : null}
-    </Flex>
   );
 }
 
@@ -496,11 +441,4 @@ function toCategoryValue(value: string | null): CategoryChipValue | null {
   if (value === null) return null;
 
   return categoryValues.has(value) ? (value as CategoryChipValue) : null;
-}
-
-function statementKindLabel(value: string) {
-  if (value === "checking_account") return "Checking account";
-  if (value === "credit_card") return "Credit card";
-
-  return "Unknown statement";
 }

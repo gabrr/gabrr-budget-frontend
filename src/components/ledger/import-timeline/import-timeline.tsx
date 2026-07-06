@@ -15,6 +15,7 @@ export type ImportTimelineProps = {
   onSelectJob?: (jobId: string) => void;
   isLoading?: boolean;
   emptyLabel?: string;
+  variant?: "card" | "embedded";
 };
 
 const statusLabels: Record<ImportTimelineStatus, string> = {
@@ -38,14 +39,17 @@ export function ImportTimeline({
   onSelectJob,
   isLoading = false,
   emptyLabel = "No statement imports yet.",
+  variant = "card",
 }: ImportTimelineProps) {
+  const isEmbedded = variant === "embedded";
+
   if (isLoading) {
     return (
       <Stack
         aria-busy="true"
         aria-label="Loading import timeline"
         gap="8px"
-        p="9px"
+        p={isEmbedded ? "0" : "9px"}
       >
         {[0, 1, 2].map((item) => (
           <TimelineSkeletonRow key={item} />
@@ -76,13 +80,20 @@ export function ImportTimeline({
   }
 
   return (
-    <Stack as="ol" gap="8px" listStyleType="none" m="0" p="9px">
+    <Stack
+      as="ol"
+      gap="8px"
+      listStyleType="none"
+      m="0"
+      p={isEmbedded ? "0" : "9px"}
+    >
       {jobs.map((job) => (
         <Box as="li" key={job.job_id}>
           <TimelineRow
             isSelected={job.job_id === selectedJobId}
             job={job}
             onSelectJob={onSelectJob}
+            variant={variant}
           />
         </Box>
       ))}
@@ -94,12 +105,15 @@ function TimelineRow({
   isSelected,
   job,
   onSelectJob,
+  variant,
 }: {
   isSelected: boolean;
   job: ImportTimelineJob;
   onSelectJob?: (jobId: string) => void;
+  variant: "card" | "embedded";
 }) {
   const isSelectable = Boolean(onSelectJob);
+  const isEmbedded = variant === "embedded";
   const content = (
     <>
       <TimelineRail />
@@ -132,8 +146,22 @@ function TimelineRow({
     <Grid
       asChild
       alignItems="center"
-      bg={"bg.surface"}
-      borderColor={isSelected ? "border.strong" : "border.subtle"}
+      bg={
+        isEmbedded
+          ? isSelected
+            ? "bg.surfaceElevated"
+            : "transparent"
+          : "bg.surface"
+      }
+      borderColor={
+        isEmbedded
+          ? isSelected
+            ? "border.subtle"
+            : "transparent"
+          : isSelected
+            ? "border.strong"
+            : "border.subtle"
+      }
       borderRadius="14px"
       borderWidth="1px"
       cursor={isSelectable ? "pointer" : "default"}
@@ -149,7 +177,11 @@ function TimelineRow({
         isSelectable
           ? {
               bg: "bg.surfaceElevated",
-              borderColor: isSelected ? "border.strong" : "border.subtle",
+              borderColor: isEmbedded
+                ? "border.subtle"
+                : isSelected
+                  ? "border.strong"
+                  : "border.subtle",
             }
           : undefined
       }
