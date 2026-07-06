@@ -7,8 +7,7 @@ export type TransactionNature =
   | "expense"
   | "transfer"
   | "refund"
-  | "debt_payment"
-  | "investment"
+  | "card_payment"
   | "unknown";
 
 export type TransactionListItem = {

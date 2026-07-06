@@ -30,7 +30,7 @@ const statementKindLabels: Record<ImportTimelineStatementKind, string> = {
   unknown: "Unknown statement",
 };
 
-const railLeft = "79px";
+const railLeft = "63px";
 
 export function ImportTimeline({
   jobs,
@@ -111,17 +111,17 @@ function TimelineRow({
         </Flex>
         <Text
           color="text.primary"
-          fontSize="15px"
+          fontSize="13px"
           fontWeight="780"
           letterSpacing="0"
-          lineHeight="1.2"
+          lineHeight="1"
           overflow="hidden"
           textOverflow="ellipsis"
           whiteSpace="nowrap"
         >
           {job.original_filename || "Untitled import"}
         </Text>
-        <Text color="text.secondary" fontSize="12px" lineHeight="1.35">
+        <Text color="text.secondary" fontSize="12px" lineHeight=".8">
           {secondaryLine(job)}
         </Text>
       </Stack>
@@ -131,14 +131,14 @@ function TimelineRow({
   return (
     <Grid
       asChild
-      alignItems="start"
-      bg={isSelected ? "bg.control" : "transparent"}
-      borderColor={isSelected ? "border.strong" : "transparent"}
+      alignItems="center"
+      bg={"bg.surface"}
+      borderColor={isSelected ? "border.strong" : "border.subtle"}
       borderRadius="14px"
       borderWidth="1px"
       cursor={isSelectable ? "pointer" : "default"}
       gap="24px"
-      gridTemplateColumns="58px minmax(0, 1fr)"
+      gridTemplateColumns="42px minmax(0, 1fr)"
       minH="88px"
       p="9px"
       position="relative"
@@ -148,7 +148,7 @@ function TimelineRow({
       _hover={
         isSelectable
           ? {
-              bg: isSelected ? "bg.control" : "bg.surfaceElevated",
+              bg: "bg.surfaceElevated",
               borderColor: isSelected ? "border.strong" : "border.subtle",
             }
           : undefined
@@ -172,7 +172,9 @@ function TimelineRow({
           {content}
         </button>
       ) : (
-        <article aria-label={`${job.original_filename || "Untitled import"} - ${statusLabels[job.status]}`}>
+        <article
+          aria-label={`${job.original_filename || "Untitled import"} - ${statusLabels[job.status]}`}
+        >
           {content}
         </article>
       )}
@@ -189,7 +191,7 @@ function DateBlock({ value }: { value: string }) {
         as="strong"
         color="text.primary"
         display="block"
-        fontSize="34px"
+        fontSize="20px"
         fontWeight="780"
         letterSpacing="0"
         lineHeight="1"
@@ -221,7 +223,8 @@ function TimelineRail() {
       position="absolute"
       top="-8px"
       transform="translateX(-50%)"
-      w="1px"
+      w="2px"
+      borderRadius="4px"
     >
       <Flex
         align="center"

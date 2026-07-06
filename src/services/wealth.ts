@@ -2,15 +2,22 @@ import { API_BASE_URL, type ImportJobResponse } from "@/services/import";
 
 export type Transaction = {
   id: string;
+  import_job_id: string | null;
   posted_at: string | null;
   date: string | null;
   description: string | null;
+  merchant_name: string | null;
+  merchant?: string | null;
   amount: string | number | null;
   currency: string | null;
+  category: string | null;
   report_bucket: string;
+  classification_source: string;
   classification_confidence: string | number | null;
   classification_reason: string | null;
   is_draft: boolean;
+  statement_kind?: string;
+  transaction_nature: string;
 };
 
 export type TransactionsResponse = {
@@ -18,6 +25,13 @@ export type TransactionsResponse = {
   total: number;
   limit: number;
   offset: number;
+};
+
+export type FetchTransactionsOptions = {
+  importJobId?: string;
+  isDraft?: boolean;
+  limit?: number;
+  offset?: number;
 };
 
 export type WealthCheckpoint = {
@@ -79,8 +93,21 @@ export function fetchMonthlyCapacityReport(): Promise<MonthlyCapacityReport> {
   );
 }
 
-export function fetchTransactions(): Promise<TransactionsResponse> {
-  return api<TransactionsResponse>("/transactions?limit=100&is_draft=true");
+export function fetchTransactions(
+  options: FetchTransactionsOptions = {},
+): Promise<TransactionsResponse> {
+  const params = new URLSearchParams();
+  params.set("limit", String(options.limit ?? 100));
+  params.set("is_draft", String(options.isDraft ?? true));
+
+  if (options.importJobId) {
+    params.set("import_job_id", options.importJobId);
+  }
+  if (options.offset) {
+    params.set("offset", String(options.offset));
+  }
+
+  return api<TransactionsResponse>(`/transactions?${params.toString()}`);
 }
 
 export function updateTransactionBucket(
