@@ -1,22 +1,39 @@
 import { Box, Flex, Heading, Stack, Text } from "@chakra-ui/react";
+import type { BoxProps, StackProps } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 
 type SectionCardProps = {
   actions?: ReactNode;
+  bodyOverflowY?: BoxProps["overflowY"];
+  bodyP?: BoxProps["p"];
+  bodyPb?: BoxProps["pb"];
+  bodyPr?: BoxProps["pr"];
+  bodyPt?: BoxProps["pt"];
   children: ReactNode;
   eyebrow?: string;
+  h?: StackProps["h"];
   meta?: string;
+  maxW?: StackProps["maxW"];
   subtitle?: string;
   title: string;
+  w?: StackProps["w"];
 };
 
 export function SectionCard({
   actions,
+  bodyOverflowY,
+  bodyP = { base: "4", md: "5" },
+  bodyPb,
+  bodyPr,
+  bodyPt,
   children,
   eyebrow,
+  h,
   meta,
+  maxW,
   subtitle,
   title,
+  w,
 }: SectionCardProps) {
   return (
     <Stack
@@ -26,8 +43,11 @@ export function SectionCard({
       borderWidth="1px"
       boxShadow="0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 30px rgba(0, 0, 0, 0.05)"
       gap="0"
+      h={h}
+      maxW={maxW}
       minW="0"
       overflow="hidden"
+      w={w}
     >
       <Flex
         align={{ base: "stretch", md: "flex-start" }}
@@ -82,7 +102,17 @@ export function SectionCard({
         ) : null}
       </Flex>
 
-      <Box p={{ base: "4", md: "5" }}>{children}</Box>
+      <Box
+        flex="1"
+        minH="0"
+        overflowY={bodyOverflowY}
+        p={bodyP}
+        pb={bodyPb}
+        pr={bodyPr}
+        pt={bodyPt}
+      >
+        {children}
+      </Box>
     </Stack>
   );
 }

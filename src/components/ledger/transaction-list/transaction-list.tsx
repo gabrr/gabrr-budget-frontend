@@ -1,7 +1,8 @@
 "use client";
 
 import { Box, Flex, Grid, Stack, Text } from "@chakra-ui/react";
-import { useState } from "react";
+import { Children, useState } from "react";
+import type { ReactNode } from "react";
 import { BucketChip, CategoryChip, ConfidenceChip } from "@/components/chips";
 import type { BucketChipValue } from "@/components/chips";
 import type {
@@ -16,6 +17,7 @@ export type TransactionListProps = {
   onOpenChange?: (transactionId: string | null) => void;
   isLoading?: boolean;
   emptyLabel?: string;
+  variant?: "stack" | "grid";
 };
 
 const sourceLabels: Record<TransactionClassificationSource, string> = {
@@ -40,6 +42,7 @@ export function TransactionList({
   onOpenChange,
   isLoading = false,
   emptyLabel = "No draft transactions yet.",
+  variant = "stack",
 }: TransactionListProps) {
   const [uncontrolledOpenId, setUncontrolledOpenId] = useState<string | null>(
     defaultOpenTransactionId ?? null,
@@ -56,11 +59,15 @@ export function TransactionList({
 
   if (isLoading) {
     return (
-      <Stack aria-busy="true" aria-label="Loading transactions" gap="8px">
+      <TransactionCardLayout
+        aria-busy="true"
+        aria-label="Loading transactions"
+        variant={variant}
+      >
         {[0, 1, 2].map((item) => (
           <TransactionSkeletonCard key={item} />
         ))}
-      </Stack>
+      </TransactionCardLayout>
     );
   }
 
@@ -86,7 +93,7 @@ export function TransactionList({
   }
 
   return (
-    <Stack gap="8px">
+    <TransactionCardLayout variant={variant}>
       {transactions.map((transaction) => (
         <TransactionCard
           isOpen={transaction.id === currentOpenId}
@@ -97,7 +104,96 @@ export function TransactionList({
           transaction={transaction}
         />
       ))}
+    </TransactionCardLayout>
+  );
+}
+
+function TransactionCardLayout({
+  children,
+  variant,
+  ...props
+}: {
+  "aria-busy"?: boolean | "true" | "false";
+  "aria-label"?: string;
+  children: ReactNode;
+  variant: "stack" | "grid";
+}) {
+  if (variant === "grid") {
+    const items = Children.toArray(children);
+
+    return (
+      <Box
+        containerType="inline-size"
+        minW="0"
+        w="100%"
+        css={{
+          "& [data-transaction-layout='two'], & [data-transaction-layout='three']": {
+            display: "none",
+          },
+          "@container (min-width: 892px)": {
+            "& [data-transaction-layout='one']": {
+              display: "none",
+            },
+            "& [data-transaction-layout='two']": {
+              display: "grid",
+            },
+          },
+          "@container (min-width: 1344px)": {
+            "& [data-transaction-layout='two']": {
+              display: "none",
+            },
+            "& [data-transaction-layout='three']": {
+              display: "grid",
+            },
+          },
+        }}
+        {...props}
+      >
+        <Stack data-transaction-layout="one" gap="12px">
+          {items.map((item, index) => (
+            <Box key={`one-${index}`}>{item}</Box>
+          ))}
+        </Stack>
+        <ColumnLayout columnCount={2} items={items} />
+        <ColumnLayout columnCount={3} items={items} />
+      </Box>
+    );
+  }
+
+  return (
+    <Stack gap="8px" {...props}>
+      {children}
     </Stack>
+  );
+}
+
+function ColumnLayout({
+  columnCount,
+  items,
+}: {
+  columnCount: 2 | 3;
+  items: ReactNode[];
+}) {
+  return (
+    <Grid
+      data-transaction-layout={columnCount === 2 ? "two" : "three"}
+      gap="12px"
+      gridTemplateColumns={`repeat(${columnCount}, minmax(0, 1fr))`}
+      minW="0"
+      w="100%"
+    >
+      {Array.from({ length: columnCount }, (_, columnIndex) => (
+        <Stack gap="12px" key={columnIndex} minW="0">
+          {items
+            .filter((_, itemIndex) => itemIndex % columnCount === columnIndex)
+            .map((item, itemIndex) => (
+              <Box key={`${columnCount}-${columnIndex}-${itemIndex}`}>
+                {item}
+              </Box>
+            ))}
+        </Stack>
+      ))}
+    </Grid>
   );
 }
 
@@ -190,7 +286,6 @@ function TransactionCard({
               ) : null}
               <BucketChip value={transaction.report_bucket} />
               {confidence !== null ? <ConfidenceChip value={confidence} /> : null}
-              <SourceChip source={transaction.classification_source} />
             </Flex>
           </Stack>
 
@@ -262,31 +357,6 @@ function TransactionCard({
         </Box>
       ) : null}
     </Box>
-  );
-}
-
-function SourceChip({ source }: { source: TransactionClassificationSource }) {
-  return (
-    <Flex
-      as="span"
-      align="center"
-      bg="chip.bg"
-      borderColor="chip.border"
-      borderRadius="999px"
-      borderWidth="1px"
-      color="text.secondary"
-      fontSize="10.5px"
-      fontWeight="720"
-      gap="5px"
-      lineHeight="1"
-      minH="23px"
-      px="8px"
-      py="3px"
-      whiteSpace="nowrap"
-    >
-      <Box bg="text.tertiary" borderRadius="full" h="5px" w="5px" />
-      {sourceLabels[source]}
-    </Flex>
   );
 }
 

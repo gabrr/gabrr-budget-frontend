@@ -32,9 +32,7 @@ import {
 import {
   Box,
   Button,
-  Container,
   Flex,
-  Grid,
   Heading,
   Stack,
 } from "@chakra-ui/react";
@@ -293,7 +291,44 @@ export default function ProcessesPage() {
 
   return (
     <Box as="main" layerStyle="page">
-      <Container maxW="1480px" px={{ base: "4", md: "8", lg: "10" }} py="8">
+      <Box
+        as="section"
+        aria-label="Import timeline"
+        left={{ lg: "24px" }}
+        maxW={{ base: "none", lg: "440px" }}
+        position={{ base: "static", lg: "fixed" }}
+        px={{ base: "4", md: "8", lg: "0" }}
+        py={{ base: "4", md: "6", lg: "0" }}
+        top={{ lg: "24px" }}
+        w={{ base: "100%", lg: "440px" }}
+        zIndex={{ lg: "docked" }}
+      >
+        <SectionCard
+          bodyOverflowY={{ lg: "auto" }}
+          bodyPb={{ lg: "24px" }}
+          bodyPr={{ lg: "29px" }}
+          bodyPt={{ lg: "24px" }}
+          h={{ lg: "calc(100vh - 48px)" }}
+          title="Import timeline"
+          subtitle="Select a statement import to review its draft transactions."
+        >
+          <ImportTimeline
+            jobs={timelineJobs}
+            selectedJobId={selectedJobId ?? undefined}
+            onSelectJob={setSelectedJobId}
+            isLoading={isJobsLoading}
+            emptyLabel="No statement imports yet."
+            variant="embedded"
+          />
+        </SectionCard>
+      </Box>
+
+      <Box
+        ml={{ base: "0", lg: "464px" }}
+        minH="100vh"
+        minW="0"
+        p={{ base: "4", md: "6" }}
+      >
         <Flex
           as="header"
           align={{ base: "stretch", md: "flex-end" }}
@@ -322,58 +357,31 @@ export default function ProcessesPage() {
           </Flex>
         </Flex>
 
-        <Grid
-          alignItems="start"
-          gap={{ base: "4", lg: "5" }}
-          gridTemplateColumns={{ base: "1fr", lg: "repeat(3, minmax(0, 1fr))" }}
-          minW="0"
-        >
-          <Box as="section" aria-label="Import timeline" gridColumn={{ lg: "span 1" }} minW="0">
-            <SectionCard
-              title="Import timeline"
-              subtitle="Select a statement import to review its draft transactions."
-            >
-              <ImportTimeline
-                jobs={timelineJobs}
-                selectedJobId={selectedJobId ?? undefined}
-                onSelectJob={setSelectedJobId}
-                isLoading={isJobsLoading}
-                emptyLabel="No statement imports yet."
-                variant="embedded"
-              />
-            </SectionCard>
-          </Box>
-
-          <Box
-            as="section"
-            aria-label="Selected import transactions"
-            gridColumn={{ lg: "span 2" }}
-            minW="0"
+        <Box as="section" aria-label="Selected import transactions" minW="0">
+          <SectionCard
+            eyebrow="Selected file"
+            title={selectedJob?.original_filename || "No import selected"}
+            meta={`${transactionsTotal} total · ${transactions.length} shown`}
           >
-            <SectionCard
-              eyebrow="Selected file"
-              title={selectedJob?.original_filename || "No import selected"}
-              meta={`${transactionsTotal} total · ${transactions.length} shown`}
-            >
-              <TransactionList
-                transactions={transactions}
-                isLoading={isTransactionsLoading}
-                emptyLabel={
-                  selectedJobId
-                    ? "No draft transactions for this import yet."
-                    : "Select an import to review transactions."
-                }
-              />
-            </SectionCard>
-          </Box>
-        </Grid>
+            <TransactionList
+              transactions={transactions}
+              isLoading={isTransactionsLoading}
+              emptyLabel={
+                selectedJobId
+                  ? "No draft transactions for this import yet."
+                  : "Select an import to review transactions."
+              }
+              variant="grid"
+            />
+          </SectionCard>
+        </Box>
 
         {message && (
           <Box layerStyle="inlineBanner" mt="4" maxW="720px" role="alert">
             {message}
           </Box>
         )}
-      </Container>
+      </Box>
     </Box>
   );
 }

@@ -165,10 +165,11 @@ function TimelineRow({
       borderRadius="14px"
       borderWidth="1px"
       cursor={isSelectable ? "pointer" : "default"}
-      gap="24px"
+      gap="32px"
       gridTemplateColumns="42px minmax(0, 1fr)"
       minH="88px"
-      p="9px"
+      px="13px"
+      py="9px"
       position="relative"
       textAlign="left"
       transition="background 140ms ease, border-color 140ms ease"
@@ -218,7 +219,7 @@ function DateBlock({ value }: { value: string }) {
   const parsed = parseDateParts(value);
 
   return (
-    <Stack align="flex-end" gap="0" textAlign="right">
+    <Stack align="flex-baseline" gap="0">
       <Text
         as="strong"
         color="text.primary"
@@ -269,7 +270,7 @@ function TimelineRail() {
         justify="center"
         left="50%"
         position="absolute"
-        top="17px"
+        top="50%"
         transform="translateX(-50%)"
         w="12px"
       >
