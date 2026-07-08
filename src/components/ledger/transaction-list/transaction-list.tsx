@@ -219,6 +219,7 @@ function TransactionCard({
       borderColor={isOpen ? "border.strong" : "border.subtle"}
       borderRadius="16px"
       borderWidth="1px"
+      data-transaction-id={transaction.id}
       overflow="hidden"
       transition="border-color 140ms ease, background 140ms ease"
       _focusWithin={{
@@ -251,6 +252,7 @@ function TransactionCard({
         <button
           aria-expanded={isOpen}
           aria-label={`${title} transaction details`}
+          data-transaction-button-id={transaction.id}
           type="button"
           onClick={onToggle}
         >

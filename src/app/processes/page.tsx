@@ -38,6 +38,7 @@ import {
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 const timelineStatuses = new Set<ImportTimelineStatus>([
   "pending",
@@ -96,10 +97,16 @@ export default function ProcessesPage() {
   const [jobs, setJobs] = useState<ImportJobEvent[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
+  const [transactionsJobId, setTransactionsJobId] = useState<string | null>(null);
   const [transactionsTotal, setTransactionsTotal] = useState(0);
   const [isJobsLoading, setIsJobsLoading] = useState(true);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [focusedArea, setFocusedArea] = useState<"timeline" | "transactions" | null>(null);
+  const [focusedJobId, setFocusedJobId] = useState<string | null>(null);
+  const [focusedTransactionId, setFocusedTransactionId] = useState<string | null>(null);
+  const [pendingTransactionFocusJobId, setPendingTransactionFocusJobId] =
+    useState<string | null>(null);
   const eventSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const isMountedRef = useRef(false);
   const selectedJobIdRef = useRef<string | null>(null);
@@ -115,6 +122,7 @@ export default function ProcessesPage() {
 
     if (jobId === null) {
       setTransactions([]);
+      setTransactionsJobId(null);
       setTransactionsTotal(0);
       setIsTransactionsLoading(false);
       return;
@@ -133,6 +141,7 @@ export default function ProcessesPage() {
       }
 
       setTransactions(response.items.map(toTransactionListItem));
+      setTransactionsJobId(jobId);
       setTransactionsTotal(response.total);
     } catch (error) {
       if (!isMountedRef.current || requestId !== transactionsRequestRef.current) {
@@ -289,6 +298,104 @@ export default function ProcessesPage() {
     jobs.find((job) => job.job_id === selectedJobId) ?? null;
   const timelineJobs = jobs.map(toTimelineJob);
 
+  function handleKeyDown(
+    event: ReactKeyboardEvent<HTMLElement> | globalThis.KeyboardEvent,
+  ) {
+    if (!["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(event.key)) {
+      if (event.key === "Enter" && focusedArea === "timeline" && focusedJobId) {
+        event.preventDefault();
+        setSelectedJobId(focusedJobId);
+      }
+      return;
+    }
+
+    event.preventDefault();
+
+    if (focusedArea === null) {
+      focusTimeline(0);
+      return;
+    }
+
+    if (focusedArea === "timeline") {
+      const currentIndex = timelineJobs.findIndex((job) => job.job_id === focusedJobId);
+      if (event.key === "ArrowDown") focusTimeline(currentIndex + 1);
+      if (event.key === "ArrowUp") focusTimeline(currentIndex - 1);
+      if (event.key === "ArrowRight" && focusedJobId) {
+        setSelectedJobId(focusedJobId);
+        setPendingTransactionFocusJobId(focusedJobId);
+      }
+      return;
+    }
+
+    if (!focusedTransactionId) {
+      focusTransaction(0);
+      return;
+    }
+
+    const nextTransactionId = focusAdjacentTransaction(
+      focusedTransactionId,
+      toTransactionDirection(event.key),
+    );
+
+    if (nextTransactionId) {
+      setFocusedArea("transactions");
+      setFocusedJobId(null);
+      setFocusedTransactionId(nextTransactionId);
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      focusTimeline(timelineJobs.findIndex((job) => job.job_id === selectedJobId));
+    }
+  }
+
+  function focusTimeline(index: number) {
+    if (timelineJobs.length === 0) return;
+
+    const job = timelineJobs[clamp(index, 0, timelineJobs.length - 1)];
+    setFocusedArea("timeline");
+    setFocusedJobId(job.job_id);
+    setFocusedTransactionId(null);
+    focusImportJobButton(job.job_id);
+  }
+
+  const focusTransaction = useCallback((index: number) => {
+    const transaction = transactions[clamp(index, 0, transactions.length - 1)];
+    if (!transaction) return;
+
+    setFocusedArea("transactions");
+    setFocusedJobId(null);
+    setFocusedTransactionId(transaction.id);
+    focusTransactionButton(transaction.id);
+  }, [transactions]);
+
+  useEffect(() => {
+    if (
+      pendingTransactionFocusJobId === null ||
+      pendingTransactionFocusJobId !== selectedJobId ||
+      transactionsJobId !== pendingTransactionFocusJobId ||
+      isTransactionsLoading ||
+      transactions.length === 0
+    ) {
+      return;
+    }
+
+    focusTransaction(0);
+    setPendingTransactionFocusJobId(null);
+  }, [
+    focusTransaction,
+    isTransactionsLoading,
+    pendingTransactionFocusJobId,
+    selectedJobId,
+    transactionsJobId,
+    transactions.length,
+  ]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
+
   return (
     <Box as="main" layerStyle="page">
       <Box
@@ -315,7 +422,12 @@ export default function ProcessesPage() {
           <ImportTimeline
             jobs={timelineJobs}
             selectedJobId={selectedJobId ?? undefined}
-            onSelectJob={setSelectedJobId}
+            onSelectJob={(jobId) => {
+              setFocusedArea("timeline");
+              setFocusedJobId(jobId);
+              setFocusedTransactionId(null);
+              setSelectedJobId(jobId);
+            }}
             isLoading={isJobsLoading}
             emptyLabel="No statement imports yet."
             variant="embedded"
@@ -449,4 +561,123 @@ function toCategoryValue(value: string | null): CategoryChipValue | null {
   if (value === null) return null;
 
   return categoryValues.has(value) ? (value as CategoryChipValue) : null;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function focusImportJobButton(jobId: string) {
+  focusBySelector(`[data-import-job-id="${jobId}"]`);
+}
+
+function focusTransactionButton(transactionId: string) {
+  focusBySelector(`[data-transaction-button-id="${transactionId}"]`);
+}
+
+type TransactionDirection = "up" | "down" | "left" | "right";
+
+function toTransactionDirection(key: string): TransactionDirection {
+  if (key === "ArrowUp") return "up";
+  if (key === "ArrowDown") return "down";
+  if (key === "ArrowLeft") return "left";
+  return "right";
+}
+
+function focusAdjacentTransaction(
+  currentTransactionId: string,
+  direction: TransactionDirection,
+) {
+  const current = getVisibleElement(
+    `[data-transaction-button-id="${currentTransactionId}"]`,
+  );
+  if (!current) return null;
+
+  const currentRect = current.getBoundingClientRect();
+  const currentCenter = rectCenter(currentRect);
+  const candidates = getVisibleElements("[data-transaction-button-id]")
+    .filter((element) => element !== current)
+    .map((element) => ({
+      element,
+      id: element.dataset.transactionButtonId,
+      rect: element.getBoundingClientRect(),
+    }))
+    .filter((candidate) => candidate.id);
+
+  const directionalCandidates = candidates.filter(({ rect }) => {
+    const center = rectCenter(rect);
+    if (direction === "up") return center.y < currentCenter.y - 1;
+    if (direction === "down") return center.y > currentCenter.y + 1;
+    if (direction === "left") {
+      return center.x < currentCenter.x - 1 && verticalOverlap(currentRect, rect) > 0;
+    }
+    return center.x > currentCenter.x + 1 && verticalOverlap(currentRect, rect) > 0;
+  });
+
+  const next = directionalCandidates.toSorted((a, b) => {
+    const scoreA = transactionDirectionScore(direction, currentRect, a.rect);
+    const scoreB = transactionDirectionScore(direction, currentRect, b.rect);
+    return scoreA - scoreB;
+  })[0];
+
+  if (!next?.id) return null;
+
+  focusTransactionButton(next.id);
+  return next.id;
+}
+
+function transactionDirectionScore(
+  direction: TransactionDirection,
+  currentRect: DOMRect,
+  candidateRect: DOMRect,
+) {
+  const currentCenter = rectCenter(currentRect);
+  const candidateCenter = rectCenter(candidateRect);
+  const deltaX = Math.abs(candidateCenter.x - currentCenter.x);
+  const deltaY = Math.abs(candidateCenter.y - currentCenter.y);
+
+  if (direction === "up" || direction === "down") {
+    return deltaY + deltaX * 4;
+  }
+
+  return deltaX + deltaY * 4;
+}
+
+function rectCenter(rect: DOMRect) {
+  return {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  };
+}
+
+function verticalOverlap(a: DOMRect, b: DOMRect) {
+  return Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+}
+
+function focusBySelector(selector: string) {
+  window.requestAnimationFrame(() => {
+    const element =
+      getVisibleElement(selector) ?? document.querySelector<HTMLElement>(selector);
+    element?.focus();
+    element?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  });
+}
+
+function getVisibleElement(selector: string) {
+  return getVisibleElements(selector)[0] ?? null;
+}
+
+function getVisibleElements(selector: string) {
+  return Array.from(document.querySelectorAll<HTMLElement>(selector)).filter(
+    isVisibleElement,
+  );
+}
+
+function isVisibleElement(element: HTMLElement) {
+  const style = window.getComputedStyle(element);
+  return (
+    style.display !== "none" &&
+    style.visibility !== "hidden" &&
+    element.getClientRects().length > 0
+  );
 }

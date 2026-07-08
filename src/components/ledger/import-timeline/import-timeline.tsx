@@ -165,6 +165,7 @@ function TimelineRow({
       borderRadius="14px"
       borderWidth="1px"
       cursor={isSelectable ? "pointer" : "default"}
+      data-import-job-id={job.job_id}
       gap="32px"
       gridTemplateColumns="42px minmax(0, 1fr)"
       minH="88px"
