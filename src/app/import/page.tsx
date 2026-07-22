@@ -1,9 +1,8 @@
 "use client";
 
 import {
-  API_BASE_URL,
   type ImportJobEvent,
-  fetchImportJob,
+  pollImportJob,
   uploadImportFile,
 } from "@/services/import";
 import { Box, Button, Container, Input, Text, VStack } from "@chakra-ui/react";
@@ -41,11 +40,11 @@ export default function ImportPage() {
     return storedJob ? (JSON.parse(storedJob) as ImportJobEvent) : null;
   });
   const [isUploading, setIsUploading] = useState(false);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const pollControllerRef = useRef<AbortController | null>(null);
   const seenTimelineEventsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    return () => eventSourceRef.current?.close();
+    return () => pollControllerRef.current?.abort();
   }, []);
 
   const appendTimeline = (line: string) => {
@@ -72,25 +71,13 @@ export default function ImportPage() {
     appendTimeline(timelineLine(job));
   };
 
-  const pollStatus = async (statusUrl: string) => {
-    try {
-      const update = await fetchImportJob(statusUrl);
-      rememberJob(update);
-      appendJobTimeline(update);
-    } catch (error) {
-      appendTimeline(
-        error instanceof Error ? error.message : "Status check failed",
-      );
-    }
-  };
-
   const uploadExample = async () => {
     if (!file) {
       appendTimeline(`Choose ${EXAMPLE_FILE_PATH} first.`);
       return;
     }
 
-    eventSourceRef.current?.close();
+    pollControllerRef.current?.abort();
     seenTimelineEventsRef.current = new Set();
     setTimeline([]);
     window.localStorage.removeItem(TIMELINE_STORAGE_KEY);
@@ -102,30 +89,20 @@ export default function ImportPage() {
       rememberJob(job);
       appendJobTimeline(job);
 
-      const events = new EventSource(`${API_BASE_URL}${job.events_url}`);
-      eventSourceRef.current = events;
-
-      events.addEventListener("progress", (event) => {
-        const update = JSON.parse(event.data) as ImportJobEvent;
-        rememberJob(update);
-        appendJobTimeline(update);
-
-        if (update.status === "done" || update.status === "failed") {
-          events.close();
-          eventSourceRef.current = null;
-          setIsUploading(false);
-        }
-      });
-
-      events.addEventListener("error", () => {
-        appendTimeline(
-          "Event stream disconnected; checking status once by polling.",
+      if (job.status === "pending" || job.status === "processing") {
+        const controller = new AbortController();
+        pollControllerRef.current = controller;
+        await pollImportJob(
+          job.status_url,
+          (update) => {
+            rememberJob(update);
+            appendJobTimeline(update);
+          },
+          controller.signal,
         );
-        events.close();
-        eventSourceRef.current = null;
-        setIsUploading(false);
-        void pollStatus(job.status_url);
-      });
+        pollControllerRef.current = null;
+      }
+      setIsUploading(false);
     } catch (error) {
       appendTimeline(error instanceof Error ? error.message : "Upload failed");
       setIsUploading(false);

@@ -1,4 +1,5 @@
-import { API_BASE_URL, type ImportJobResponse } from "@/services/import";
+import { authenticatedFetch } from "@/services/api";
+import type { ImportJobResponse } from "@/services/import";
 
 export type Transaction = {
   id: string;
@@ -70,7 +71,7 @@ export type MonthlyCapacityReport = {
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await authenticatedFetch(path, {
     ...init,
     headers: {
       "Content-Type": "application/json",

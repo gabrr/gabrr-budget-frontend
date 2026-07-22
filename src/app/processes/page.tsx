@@ -20,8 +20,6 @@ import {
   type CategoryChipValue,
 } from "@/components/chips";
 import {
-  API_BASE_URL,
-  fetchImportJob,
   fetchImportJobs,
   type ImportJobEvent,
 } from "@/services/import";
@@ -107,7 +105,6 @@ export default function ProcessesPage() {
   const [focusedTransactionId, setFocusedTransactionId] = useState<string | null>(null);
   const [pendingTransactionFocusJobId, setPendingTransactionFocusJobId] =
     useState<string | null>(null);
-  const eventSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const isMountedRef = useRef(false);
   const selectedJobIdRef = useRef<string | null>(null);
   const transactionsRequestRef = useRef(0);
@@ -160,96 +157,10 @@ export default function ProcessesPage() {
     }
   }, []);
 
-  const updateJob = useCallback((update: ImportJobEvent) => {
-    setJobs((currentJobs) => {
-      const hasJob = currentJobs.some((job) => job.job_id === update.job_id);
-      if (!hasJob) return [update, ...currentJobs];
-
-      return currentJobs.map((job) =>
-        job.job_id === update.job_id ? update : job,
-      );
-    });
-  }, []);
-
-  const closeJobWatch = useCallback((jobId: string) => {
-    const eventSource = eventSourcesRef.current.get(jobId);
-    if (!eventSource) return;
-
-    eventSource.close();
-    eventSourcesRef.current.delete(jobId);
-  }, []);
-
-  const closeInactiveWatches = useCallback((nextJobs: ImportJobEvent[]) => {
-    const activeJobIds = new Set(
-      nextJobs.filter(isActiveJob).map((job) => job.job_id),
-    );
-
-    for (const [jobId, eventSource] of eventSourcesRef.current) {
-      if (!activeJobIds.has(jobId)) {
-        eventSource.close();
-        eventSourcesRef.current.delete(jobId);
-      }
-    }
-  }, []);
-
-  const handleTerminalJob = useCallback(
-    (update: ImportJobEvent) => {
-      if (isActiveJob(update)) return;
-
-      closeJobWatch(update.job_id);
-
-      if (selectedJobIdRef.current === update.job_id) {
-        void loadTransactionsForJob(update.job_id);
-      }
-    },
-    [closeJobWatch, loadTransactionsForJob],
-  );
-
-  const watchJob = useCallback(
-    (job: ImportJobEvent) => {
-      if (!isActiveJob(job) || eventSourcesRef.current.has(job.job_id)) {
-        return;
-      }
-
-      const events = new EventSource(`${API_BASE_URL}${job.events_url}`);
-      eventSourcesRef.current.set(job.job_id, events);
-
-      events.addEventListener("progress", (event) => {
-        const update = JSON.parse(event.data) as ImportJobEvent;
-        if (!isMountedRef.current) return;
-
-        updateJob(update);
-        handleTerminalJob(update);
-      });
-
-      events.addEventListener("error", () => {
-        closeJobWatch(job.job_id);
-
-        void fetchImportJob(job.status_url)
-          .then((update) => {
-            if (!isMountedRef.current) return;
-
-            updateJob(update);
-            handleTerminalJob(update);
-          })
-          .catch(() => undefined);
-      });
-    },
-    [closeJobWatch, handleTerminalJob, updateJob],
-  );
-
-  const watchActiveJobs = useCallback(
-    (nextJobs: ImportJobEvent[]) => {
-      closeInactiveWatches(nextJobs);
-      nextJobs.forEach(watchJob);
-    },
-    [closeInactiveWatches, watchJob],
-  );
-
   const loadJobs = useCallback(
-    async ({ refreshTransactions = false } = {}) => {
-      setIsJobsLoading(true);
-      setMessage(null);
+    async ({ refreshTransactions = false, silent = false } = {}) => {
+      if (!silent) setIsJobsLoading(true);
+      if (!silent) setMessage(null);
       try {
         const nextJobs = await fetchImportJobs(20);
         if (!isMountedRef.current) return;
@@ -262,33 +173,40 @@ export default function ProcessesPage() {
 
         setJobs(nextJobs);
         setSelectedJobId(nextSelectedJobId);
-        watchActiveJobs(nextJobs);
 
         if (refreshTransactions && !selectedChanged) {
           void loadTransactionsForJob(nextSelectedJobId);
         }
       } catch (error) {
         if (!isMountedRef.current) return;
-        setMessage(error instanceof Error ? error.message : "Could not load jobs");
+        if (!silent) {
+          setMessage(error instanceof Error ? error.message : "Could not load jobs");
+        }
       } finally {
-        if (isMountedRef.current) setIsJobsLoading(false);
+        if (isMountedRef.current && !silent) setIsJobsLoading(false);
       }
     },
-    [loadTransactionsForJob, watchActiveJobs],
+    [loadTransactionsForJob],
   );
 
   useEffect(() => {
-    const eventSources = eventSourcesRef.current;
-
     isMountedRef.current = true;
     void loadJobs();
 
     return () => {
       isMountedRef.current = false;
-      eventSources.forEach((eventSource) => eventSource.close());
-      eventSources.clear();
     };
   }, [loadJobs]);
+
+  useEffect(() => {
+    if (!jobs.some(isActiveJob)) return;
+
+    const timeout = window.setTimeout(() => {
+      void loadJobs({ refreshTransactions: true, silent: true });
+    }, 1500);
+
+    return () => window.clearTimeout(timeout);
+  }, [jobs, loadJobs]);
 
   useEffect(() => {
     void loadTransactionsForJob(selectedJobId);
