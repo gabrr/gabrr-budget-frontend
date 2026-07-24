@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  fetchActiveImportJob,
   type ImportJobEvent,
   pollImportJob,
   uploadImportFile,
@@ -40,6 +41,7 @@ export default function ImportPage() {
     return storedJob ? (JSON.parse(storedJob) as ImportJobEvent) : null;
   });
   const [isUploading, setIsUploading] = useState(false);
+  const idempotencyKeyRef = useRef<string | null>(null);
   const pollControllerRef = useRef<AbortController | null>(null);
   const seenTimelineEventsRef = useRef<Set<string>>(new Set());
 
@@ -71,6 +73,41 @@ export default function ImportPage() {
     appendTimeline(timelineLine(job));
   };
 
+  useEffect(() => {
+    const controller = new AbortController();
+    pollControllerRef.current = controller;
+
+    void fetchActiveImportJob()
+      .then(async (job) => {
+        if (!job || controller.signal.aborted) return;
+
+        setIsUploading(true);
+        rememberJob(job);
+        appendJobTimeline(job);
+        await pollImportJob(
+          job.status_url,
+          (update) => {
+            rememberJob(update);
+            appendJobTimeline(update);
+          },
+          controller.signal,
+        );
+        if (!controller.signal.aborted) setIsUploading(false);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          appendTimeline(
+            error instanceof Error ? error.message : "Could not resume import",
+          );
+          setIsUploading(false);
+        }
+      });
+
+    return () => controller.abort();
+    // This recovery runs only once when the page opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const uploadExample = async () => {
     if (!file) {
       appendTimeline(`Choose ${EXAMPLE_FILE_PATH} first.`);
@@ -85,7 +122,8 @@ export default function ImportPage() {
 
     try {
       appendTimeline(`Uploading ${file.name}`);
-      const job = await uploadImportFile(file);
+      idempotencyKeyRef.current ??= crypto.randomUUID();
+      const job = await uploadImportFile(file, idempotencyKeyRef.current);
       rememberJob(job);
       appendJobTimeline(job);
 
@@ -132,7 +170,10 @@ export default function ImportPage() {
             <Input
               type="file"
               accept="application/pdf,.pdf"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              onChange={(event) => {
+                setFile(event.target.files?.[0] ?? null);
+                idempotencyKeyRef.current = crypto.randomUUID();
+              }}
             />
             <Button
               colorPalette="blue"

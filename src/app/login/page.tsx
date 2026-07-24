@@ -1,9 +1,10 @@
 "use client";
 
 import { browserAuth } from "@/auth/browser";
-import { Box, Button, Container, Heading, Input, Stack, Text } from "@chakra-ui/react";
+import { safeAuthDestination } from "@/auth/redirect";
+import { Box, Button, Container, Heading, Stack, Text } from "@chakra-ui/react";
 import { useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useState } from "react";
+import { Suspense, useState } from "react";
 
 export default function LoginPage() {
   return (
@@ -15,31 +16,27 @@ export default function LoginPage() {
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("g.webdevelopr@gmail.com");
-  const [isSending, setIsSending] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [message, setMessage] = useState<string | null>(
-    searchParams.get("error") ? "That sign-in link is invalid or expired." : null,
+    searchParams.get("error")
+      ? "Sign-in was canceled or could not be completed."
+      : null,
   );
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setIsSending(true);
+  async function handleGoogleSignIn() {
+    setIsSigningIn(true);
     setMessage(null);
 
-    const next = searchParams.get("next") ?? "/dashboard";
+    const next = safeAuthDestination(searchParams.get("next"));
     const callback = new URL("/auth/confirm", window.location.origin);
-    callback.searchParams.set("next", next.startsWith("/") ? next : "/dashboard");
+    callback.searchParams.set("next", next);
 
     try {
-      await browserAuth.sendMagicLink(
-        email.trim().toLowerCase(),
-        callback.toString(),
-      );
-      setMessage("Check your inbox for your secure sign-in link.");
+      await browserAuth.startSocialSignIn("google", callback.toString());
     } catch {
-      setMessage("We could not send the sign-in link. Please try again.");
+      setMessage("Google sign-in could not be started. Please try again.");
     } finally {
-      setIsSending(false);
+      setIsSigningIn(false);
     }
   }
 
@@ -56,22 +53,14 @@ function LoginForm() {
             </Text>
           </Box>
 
-          <Box as="form" onSubmit={handleSubmit} layerStyle="panel">
+          <Box layerStyle="panel">
             <Stack gap="4">
-              <Box>
-                <label htmlFor="email">Email</label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  mt="2"
-                />
-              </Box>
-              <Button type="submit" loading={isSending}>
-                Send magic link
+              <Button
+                type="button"
+                loading={isSigningIn}
+                onClick={handleGoogleSignIn}
+              >
+                Continue with Google
               </Button>
               {message && (
                 <Text color="text.secondary" role="status">

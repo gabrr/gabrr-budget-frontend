@@ -1,4 +1,7 @@
-import type { BrowserAuthGateway } from "@/auth/gateway";
+import type {
+  BrowserAuthGateway,
+  SocialAuthProvider,
+} from "@/auth/gateway";
 import { createClient } from "@/lib/supabase/client";
 
 export class SupabaseBrowserAuthGateway implements BrowserAuthGateway {
@@ -19,13 +22,13 @@ export class SupabaseBrowserAuthGateway implements BrowserAuthGateway {
     return () => data.subscription.unsubscribe();
   }
 
-  async sendMagicLink(email: string, redirectTo: string): Promise<void> {
-    const { error } = await createClient().auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: redirectTo,
-      },
+  async startSocialSignIn(
+    provider: SocialAuthProvider,
+    redirectTo: string,
+  ): Promise<void> {
+    const { error } = await createClient().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo },
     });
     if (error) throw error;
   }

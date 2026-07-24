@@ -17,14 +17,17 @@ export type ImportJobResponse = {
 };
 export type ImportJobEvent = ImportJobResponse;
 
-export async function uploadImportFile(file: File): Promise<ImportJobResponse> {
+export async function uploadImportFile(
+  file: File,
+  idempotencyKey: string,
+): Promise<ImportJobResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
   const response = await authenticatedFetch("/agents/process-file", {
     method: "POST",
     headers: {
-      "Idempotency-Key": crypto.randomUUID(),
+      "Idempotency-Key": idempotencyKey,
     },
     body: formData,
   });

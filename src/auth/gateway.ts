@@ -1,10 +1,15 @@
 export type AuthStateListener = (isAuthenticated: boolean) => void;
 
+export type SocialAuthProvider = "google";
+
 export interface BrowserAuthGateway {
   getAccessToken(): Promise<string | null>;
   isAuthenticated(): Promise<boolean>;
   onAuthStateChange(listener: AuthStateListener): () => void;
-  sendMagicLink(email: string, redirectTo: string): Promise<void>;
+  startSocialSignIn(
+    provider: SocialAuthProvider,
+    redirectTo: string,
+  ): Promise<void>;
   signOut(options?: { localOnly?: boolean }): Promise<void>;
 }
 
