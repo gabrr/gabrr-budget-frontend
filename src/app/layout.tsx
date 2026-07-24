@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
-import { SessionControl } from "@/components/auth/session-control";
+import { AppHeader } from "@/components/navigation/app-header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +28,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
+          <AppHeader />
           {children}
-          <SessionControl />
         </Providers>
       </body>
     </html>

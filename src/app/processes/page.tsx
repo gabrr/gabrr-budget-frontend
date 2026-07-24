@@ -34,7 +34,6 @@ import {
   Heading,
   Stack,
 } from "@chakra-ui/react";
-import NextLink from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
@@ -324,7 +323,7 @@ export default function ProcessesPage() {
         position={{ base: "static", lg: "fixed" }}
         px={{ base: "4", md: "8", lg: "0" }}
         py={{ base: "4", md: "6", lg: "0" }}
-        top={{ lg: "24px" }}
+        top={{ lg: "88px" }}
         w={{ base: "100%", lg: "440px" }}
         zIndex={{ lg: "docked" }}
       >
@@ -333,7 +332,7 @@ export default function ProcessesPage() {
           bodyPb={{ lg: "24px" }}
           bodyPr={{ lg: "29px" }}
           bodyPt={{ lg: "24px" }}
-          h={{ lg: "calc(100vh - 48px)" }}
+          h={{ lg: "calc(100vh - 112px)" }}
           title="Import timeline"
           subtitle="Select a statement import to review its draft transactions."
         >
@@ -380,9 +379,6 @@ export default function ProcessesPage() {
               onClick={() => void loadJobs({ refreshTransactions: true })}
             >
               Refresh
-            </Button>
-            <Button asChild variant="outline">
-              <NextLink href="/dashboard">Dashboard</NextLink>
             </Button>
           </Flex>
         </Flex>
