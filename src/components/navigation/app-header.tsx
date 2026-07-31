@@ -62,12 +62,12 @@ export function AppHeader() {
             as="nav"
             aria-label="Main navigation"
             display="flex"
-            gap="1"
+            gap="3"
             gridColumn={{ base: "1 / -1", md: "2" }}
             gridRow={{ base: "2", md: "1" }}
             minW="0"
+            p={"3"}
             overflowX="auto"
-            pb={{ base: "2", md: "0" }}
             scrollbarWidth="none"
           >
             {navigationItems.map((item) => {
@@ -89,7 +89,7 @@ export function AppHeader() {
                   }
                   flexShrink="0"
                   fontSize="14px"
-                  fontWeight={isActive ? "700" : "600"}
+                  fontWeight={"600"}
                   minH="36px"
                   px="3"
                   textDecoration="none"
@@ -100,7 +100,7 @@ export function AppHeader() {
                     textDecoration: "none",
                   }}
                   _focusVisible={{
-                    outline: "2px solid",
+                    outline: "2px solid gray",
                     outlineColor: "accent.blue",
                     outlineOffset: "2px",
                   }}
