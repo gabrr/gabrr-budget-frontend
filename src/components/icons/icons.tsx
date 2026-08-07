@@ -1,9 +1,6 @@
 'use client';
 
 export function ChartIcon({ size = 18, color = "currentColor" }) {
-
-	console.log("ICONS SIZE: ", size)
-
   return (
     <svg
       height={size}
@@ -16,6 +13,7 @@ export function ChartIcon({ size = 18, color = "currentColor" }) {
     </svg>
   );
 }
+
 export function ClockIcon({ size = 18, color = "currentColor" }) {
   return (
     <svg
