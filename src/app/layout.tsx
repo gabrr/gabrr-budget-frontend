@@ -1,22 +1,15 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import Providers from "./providers";
 import { AppHeader } from "@/components/navigation/app-header";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import type { Metadata } from "next";
+import Providers from "./providers";
+import { Box, Flex } from "@chakra-ui/react";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gabrr Budget AI",
-  description: "Budget management done simple.",
+  title: {
+    default: "Acetate",
+    template: "%s | Acetate",
+  },
+  description: "A clear view of your spending, statements, and wealth path.",
 };
 
 export default function RootLayout({
@@ -25,11 +18,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en">
+      <body>
         <Providers>
-          <AppHeader />
-          {children}
+          <Flex maxHeight="100vh" gap={4}>
+            <AppHeader />
+
+            <Box overflowY={"scroll"} flex={1} pr={6}>
+              {children}
+            </Box>
+          </Flex>
         </Providers>
       </body>
     </html>

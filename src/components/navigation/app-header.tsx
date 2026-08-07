@@ -1,138 +1,145 @@
 "use client";
 
 import { browserAuth } from "@/auth/browser";
-import { Box, Button, Container, Grid, Link } from "@chakra-ui/react";
-import NextLink from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import styles from "./app-header.module.css";
+import { Flex } from "@chakra-ui/react";
+import { ChartIcon, ClockIcon } from "../icons/icons";
 
-type NavigationItem = {
-  href: string;
-  label: string;
-  secondary?: boolean;
-};
-
-const navigationItems: readonly NavigationItem[] = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/import", label: "Import" },
-  { href: "/processes", label: "Processes" },
-  { href: "/catalog", label: "Catalog", secondary: true },
-];
+const navigationItems = [
+  { href: "/dashboard", label: "Dashboard", Icon: ChartIcon },
+  { href: "/processes", label: "Processes", Icon: ClockIcon },
+] as const;
 
 const publicPaths = new Set(["/login", "/auth/confirm"]);
 
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+  const accountButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setIsAccountOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isAccountOpen) return;
+
+    function closeOnOutsidePointer(event: PointerEvent) {
+      if (!accountRef.current?.contains(event.target as Node)) {
+        setIsAccountOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsAccountOpen(false);
+        accountButtonRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isAccountOpen]);
 
   if (publicPaths.has(pathname)) return null;
 
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    try {
+      await browserAuth.signOut();
+      queryClient.clear();
+      router.replace("/login");
+      router.refresh();
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
+
   return (
-    <Box
-      as="header"
-      bg="bg.surface"
-      borderBottomColor="border.subtle"
-      borderBottomWidth="1px"
-      position="sticky"
-      top="0"
-      zIndex="sticky"
-    >
-      <Container maxW="1280px" px={{ base: "4", md: "6" }}>
-        <Grid
-          alignItems="center"
-          columnGap={{ base: "4", md: "6" }}
-          gridTemplateColumns={{ base: "1fr auto", md: "auto 1fr auto" }}
-          minH={{ base: "92px", md: "64px" }}
+    <>
+      <a className={styles.skipLink} href="#main">
+        Skip to content
+      </a>
+      <header className={styles.navigation} data-product-navigation>
+        <Link
+          className={styles.brand}
+          href="/dashboard"
+          aria-label="Acetate dashboard"
         >
-          <Link
-            asChild
-            color="text.primary"
-            fontSize="15px"
-            fontWeight="800"
-            gridColumn="1"
-            gridRow="1"
-            letterSpacing="0"
-            textDecoration="none"
-          >
-            <NextLink href="/dashboard">Gabrr Budget</NextLink>
-          </Link>
+          <Image
+            className={styles.brandLockup}
+            src="/brand/acetate-horizontal.svg"
+            alt="Acetate"
+            width={446}
+            height={90}
+            priority
+          />
+        </Link>
 
-          <Box
-            as="nav"
-            aria-label="Main navigation"
-            display="flex"
-            gap="3"
-            gridColumn={{ base: "1 / -1", md: "2" }}
-            gridRow={{ base: "2", md: "1" }}
-            minW="0"
-            p={"3"}
-            overflowX="auto"
-            scrollbarWidth="none"
-          >
-            {navigationItems.map((item) => {
-              const isActive = pathname === item.href;
+        <nav className={styles.productLinks} aria-label="Product navigation">
+          {navigationItems.map((item) => {
+            const { Icon } = item;
 
-              return (
-                <Link
-                  key={item.href}
-                  asChild
-                  aria-current={isActive ? "page" : undefined}
-                  bg={isActive ? "bg.control" : "transparent"}
-                  borderRadius="6px"
-                  color={
-                    isActive
-                      ? "text.primary"
-                      : item.secondary
-                        ? "text.tertiary"
-                        : "text.secondary"
-                  }
-                  flexShrink="0"
-                  fontSize="14px"
-                  fontWeight={"600"}
-                  minH="36px"
-                  px="3"
-                  textDecoration="none"
-                  transition="background 120ms ease, color 120ms ease"
-                  _hover={{
-                    bg: "bg.control",
-                    color: "text.primary",
-                    textDecoration: "none",
-                  }}
-                  _focusVisible={{
-                    outline: "2px solid gray",
-                    outlineColor: "accent.blue",
-                    outlineOffset: "2px",
-                  }}
-                >
-                  <NextLink href={item.href}>{item.label}</NextLink>
-                </Link>
-              );
-            })}
-          </Box>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={pathname === item.href ? "page" : undefined}
+              >
+                <Flex gap={2} justifyContent={"center"} alignItems={"center"}>
+                  <Icon />
+                  {item.label}
+                </Flex>
+              </Link>
+            );
+          })}
+        </nav>
 
-          <Button
+        <div className={styles.accountContainer} ref={accountRef}>
+          <button
+            ref={accountButtonRef}
+            className={styles.account}
             type="button"
-            variant="ghost"
-            size="sm"
-            gridColumn={{ base: "2", md: "3" }}
-            gridRow="1"
-            loading={isSigningOut}
-            onClick={async () => {
-              setIsSigningOut(true);
-              try {
-                await browserAuth.signOut();
-                router.replace("/login");
-                router.refresh();
-              } finally {
-                setIsSigningOut(false);
-              }
-            }}
+            aria-expanded={isAccountOpen}
+            aria-haspopup="menu"
+            onClick={() => setIsAccountOpen((open) => !open)}
           >
-            Sign out
-          </Button>
-        </Grid>
-      </Container>
-    </Box>
+            <span className={styles.avatar} aria-hidden="true">
+              GW
+            </span>
+            <span className={styles.accountCopy}>
+              <strong>Gabriel Welzel</strong>
+              <span>Settings</span>
+            </span>
+          </button>
+
+          {isAccountOpen ? (
+            <div className={styles.accountMenu} role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                disabled={isSigningOut}
+                onClick={handleSignOut}
+              >
+                {isSigningOut ? "Signing out…" : "Sign out"}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </header>
+    </>
   );
 }
