@@ -3,7 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { allowedUserEmail } from "@/auth/config";
 import { supabaseConfig } from "./config";
 
-const PUBLIC_PATHS = new Set(["/login", "/auth/confirm"]);
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/auth/confirm",
+  "/api/request-access",
+]);
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -12,7 +16,9 @@ export async function updateSession(request: NextRequest) {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value),
+        );
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => {
           response.cookies.set(name, value, options);
@@ -22,8 +28,13 @@ export async function updateSession(request: NextRequest) {
   });
 
   const { data } = await supabase.auth.getClaims();
-  const email = String(data?.claims?.email ?? "").trim().toLowerCase();
-  const isAuthenticated = Boolean(data?.claims?.sub) && email === allowedUserEmail();
+  const email = String(data?.claims?.email ?? "")
+    .trim()
+    .toLowerCase();
+
+  const isAuthenticated =
+    Boolean(data?.claims?.sub) && email === allowedUserEmail();
+		
   const pathname = request.nextUrl.pathname;
   const isPublicPath = PUBLIC_PATHS.has(pathname);
 
