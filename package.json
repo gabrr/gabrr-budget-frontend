@@ -17,6 +17,7 @@
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8",
     "@tanstack/react-query": "^5.101.4",
+    "@vercel/analytics": "^2.0.1",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"

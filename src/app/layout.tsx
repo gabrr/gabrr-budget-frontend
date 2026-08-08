@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/navigation/app-header";
 import type { Metadata } from "next";
 import Providers from "./providers";
 import { Box, Flex } from "@chakra-ui/react";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({
             </Box>
           </Flex>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
