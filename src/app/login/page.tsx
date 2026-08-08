@@ -41,7 +41,13 @@ function LoginForm() {
   }
 
   return (
-    <Box as="main" layerStyle="page" minH="100vh" display="grid" placeItems="center">
+    <Box
+      as="main"
+      layerStyle="page"
+      minH="100vh"
+      display="grid"
+      placeItems="center"
+    >
       <Container maxW="md" px="6" py="12">
         <Stack gap="7">
           <Box>
@@ -57,6 +63,7 @@ function LoginForm() {
             <Stack gap="4">
               <Button
                 type="button"
+                color={"colorPalette.200"}
                 loading={isSigningIn}
                 onClick={handleGoogleSignIn}
               >
