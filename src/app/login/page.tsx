@@ -55,7 +55,7 @@ function LoginForm() {
               Acetate
             </Heading>
             <Text color="text.secondary" mt="2">
-              See Tomorrow. Build it from today.
+              See Tomorrow. Build it now.
             </Text>
           </Box>
 
