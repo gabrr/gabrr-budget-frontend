@@ -52,10 +52,10 @@ function LoginForm() {
         <Stack gap="7">
           <Box>
             <Heading as="h1" textStyle="pageTitle">
-              Gabrr Budget
+              Acetate
             </Heading>
             <Text color="text.secondary" mt="2">
-              Sign in to continue.
+              See Tomorrow. Build it from today.
             </Text>
           </Box>
 
