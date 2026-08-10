@@ -110,7 +110,7 @@ function LoginForm() {
       }
 
       setRequestMessage(
-        "Request sent. You should receive an email of confirmation shortly.",
+        "Request received. You have been added to the waitlist.",
       );
       setRequestName("");
       setRequestEmail("");

@@ -6,7 +6,6 @@ type RequestAccessPayload = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-type TemplateVariables = Record<string, string | number>;
 
 function normalizeString(value: unknown): string {
   if (typeof value !== "string") return "";
@@ -17,8 +16,13 @@ async function sendRequestAccessEmail(payload: RequestAccessPayload) {
   const from =
     process.env.REQUEST_ACCESS_FROM ??
     "Acetate <onboarding@updates.acetate.me>";
-  const to = payload.email;
+  const to = process.env.REQUEST_ACCESS_NOTIFY_TO;
   const resendApiKey = process.env.RESEND_API_KEY;
+
+  if (!to) {
+    console.error("REQUEST_ACCESS_NOTIFY_TO is not configured.");
+    return false;
+  }
 
   if (!resendApiKey) {
     console.error("RESEND_API_KEY is not configured.");
@@ -28,24 +32,12 @@ async function sendRequestAccessEmail(payload: RequestAccessPayload) {
   const basePayload = {
     from,
     to: [to],
-    subject: process.env.REQUEST_ACCESS_SUBJECT ?? "Acetate access request",
+    subject:
+      process.env.REQUEST_ACCESS_SUBJECT ??
+      "New user requested access to acetate.me",
+    text: `${payload.name} requested to enter the waitlist.\nEmail: ${payload.email}\n\nThe Acetate Team`,
   };
 
-  const templatePayload = {
-    ...basePayload,
-    template: {
-      id: "acetate-welcome",
-      variables: {
-        name: payload.name,
-      },
-    } as {
-      id: string;
-      variables: TemplateVariables;
-    },
-  };
-
-  const attemptPayload = templatePayload;
-	
   const attempt = async (currentPayload: Record<string, unknown>) => {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -64,22 +56,9 @@ async function sendRequestAccessEmail(payload: RequestAccessPayload) {
     return { ok: true, status: response.status, body: "" };
   };
 
-  if (!attemptPayload) {
-    return false;
-  }
-
-  const primaryResult = await attempt(attemptPayload);
+  const primaryResult = await attempt(basePayload);
 
   if (primaryResult.ok) return true;
-
-  if (templatePayload && primaryResult.status === 422) {
-    console.warn(
-      `Template payload returned ${primaryResult.status}; falling back to inline HTML/text payload.`,
-      primaryResult.body.slice(0, 500),
-    );
-
-    return false;
-  }
 
   console.error("Resend request failed", {
     status: primaryResult.status,
