@@ -6,6 +6,7 @@ type RequestAccessPayload = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+type TemplateVariables = Record<string, string | number>;
 
 function normalizeString(value: unknown): string {
   if (typeof value !== "string") return "";
@@ -16,13 +17,8 @@ async function sendRequestAccessEmail(payload: RequestAccessPayload) {
   const from =
     process.env.REQUEST_ACCESS_FROM ??
     "Acetate <onboarding@updates.acetate.me>";
-  const to = process.env.REQUEST_ACCESS_NOTIFY_TO;
+  const to = payload.email;
   const resendApiKey = process.env.RESEND_API_KEY;
-
-  if (!to) {
-    console.error("REQUEST_ACCESS_NOTIFY_TO is not configured.");
-    return false;
-  }
 
   if (!resendApiKey) {
     console.error("RESEND_API_KEY is not configured.");
@@ -32,11 +28,23 @@ async function sendRequestAccessEmail(payload: RequestAccessPayload) {
   const basePayload = {
     from,
     to: [to],
-    subject:
-      process.env.REQUEST_ACCESS_SUBJECT ??
-      "New user requested access to acetate.me",
-    text: `${payload.name} requested to enter the waitlist.\nEmail: ${payload.email}\n\nThe Acetate Team`,
+    subject: process.env.REQUEST_ACCESS_SUBJECT ?? "Acetate access request",
   };
+
+  const templatePayload = {
+    ...basePayload,
+    template: {
+      id: "acetate-welcome",
+      variables: {
+        name: payload.name,
+      },
+    } as {
+      id: string;
+      variables: TemplateVariables;
+    },
+  };
+
+  const attemptPayload = templatePayload;
 
   const attempt = async (currentPayload: Record<string, unknown>) => {
     const response = await fetch("https://api.resend.com/emails", {
@@ -56,13 +64,67 @@ async function sendRequestAccessEmail(payload: RequestAccessPayload) {
     return { ok: true, status: response.status, body: "" };
   };
 
-  const primaryResult = await attempt(basePayload);
+  if (!attemptPayload) {
+    return false;
+  }
+
+  const primaryResult = await attempt(attemptPayload);
 
   if (primaryResult.ok) return true;
+
+  if (templatePayload && primaryResult.status === 422) {
+    console.warn(
+      `Template payload returned ${primaryResult.status}; falling back to inline HTML/text payload.`,
+      primaryResult.body.slice(0, 500),
+    );
+
+    return false;
+  }
 
   console.error("Resend request failed", {
     status: primaryResult.status,
     body: primaryResult.body.slice(0, 500),
+  });
+  return false;
+}
+
+async function sendRequestAccessNotification(payload: RequestAccessPayload) {
+  const from =
+    process.env.REQUEST_ACCESS_FROM ??
+    "Acetate <onboarding@updates.acetate.me>";
+  const to = process.env.REQUEST_ACCESS_NOTIFY_TO;
+  const resendApiKey = process.env.RESEND_API_KEY;
+
+  if (!to) {
+    console.error("REQUEST_ACCESS_NOTIFY_TO is not configured.");
+    return false;
+  }
+
+  if (!resendApiKey) {
+    console.error("RESEND_API_KEY is not configured.");
+    return false;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject: "New user requested access to acetate.me",
+      text: `${payload.name} requested to enter the waitlist.\nEmail: ${payload.email}\n\nThe Acetate Team`,
+    }),
+  });
+
+  if (response.ok) return true;
+
+  const body = await response.text().catch(() => "");
+  console.error("Resend owner notification request failed", {
+    status: response.status,
+    body: body.slice(0, 500),
   });
   return false;
 }
@@ -106,8 +168,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const sent = await sendRequestAccessEmail({ name, email });
-  if (!sent) {
+  const [confirmationSent, notificationSent] = await Promise.all([
+    sendRequestAccessEmail({ name, email }),
+    sendRequestAccessNotification({ name, email }),
+  ]);
+  if (!confirmationSent || !notificationSent) {
     return NextResponse.json(
       { error: "Could not send email right now." },
       { status: 502 },
