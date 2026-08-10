@@ -17,7 +17,7 @@ async function sendRequestAccessEmail(payload: RequestAccessPayload) {
   const from =
     process.env.REQUEST_ACCESS_FROM ??
     "Acetate <onboarding@updates.acetate.me>";
-  const to = process.env.REQUEST_ACCESS_TO ?? "g.webdevelopr@gmail.com";
+  const to = payload.email;
   const resendApiKey = process.env.RESEND_API_KEY;
 
   if (!resendApiKey) {
