@@ -3,6 +3,8 @@
 import { Box, Button, Flex, Heading, Text } from "@chakra-ui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { toaster } from "@/components/toaster";
+
 import {
   displayStatementFilename,
   formatJobDay,
@@ -11,6 +13,7 @@ import {
   statementKindLabel,
 } from "../mappers";
 import {
+  useDeleteImportJob,
   useImportJobs,
   useTransactions,
   useUploadStatement,
@@ -21,6 +24,7 @@ import type {
   Transaction,
 } from "../types";
 import { useNewImportBadges } from "../use-new-import-badges";
+import { DeleteStatementDialog } from "./delete-statement-dialog";
 import { ImportHandoff } from "./import-handoff";
 import { EmptyLedger, ErrorLedger, InlineError, LoadingLedger, UploadIcon } from "./process-states";
 import { IMPORT_PAGE_SIZE, StatementChooser, StatementsPane } from "./statements-pane";
@@ -57,6 +61,7 @@ export function ProcessesScreen() {
   const [uploadValidation, setUploadValidation] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const [clearingJobId, setClearingJobId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ImportJob | null>(null);
   const idempotencyKeys = useRef(new Map<string, string>());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importButtonRef = useRef<HTMLButtonElement>(null);
@@ -64,6 +69,7 @@ export function ProcessesScreen() {
   const periodHeadingRef = useRef<HTMLHeadingElement>(null);
   const ledgerScrollRef = useRef<HTMLDivElement>(null);
   const changeButtonRef = useRef<HTMLButtonElement>(null);
+  const deleteOpenerRef = useRef<HTMLButtonElement | null>(null);
   const shouldRestoreEvidenceFocusRef = useRef(false);
   const shouldRestoreChooserFocusRef = useRef(false);
   const selectedJobId = jobs.some((job) => job.job_id === requestedJobId)
@@ -71,6 +77,7 @@ export function ProcessesScreen() {
     : jobs[0]?.job_id ?? null;
   const selectedJob = jobs.find((job) => job.job_id === selectedJobId) ?? null;
   const uploadMutation = useUploadStatement();
+  const deleteMutation = useDeleteImportJob();
   const { markRead, newJobIds, trackUpload } = useNewImportBadges(jobs, selectedJobId);
   const importPages = Math.max(1, Math.ceil(jobs.length / IMPORT_PAGE_SIZE));
   const currentImportPage = Math.min(importPage, importPages);
@@ -156,6 +163,56 @@ export function ProcessesScreen() {
   ) {
     const merchant = transaction.merchant_name || transaction.merchant || "Transaction";
     setAnnouncement(`${merchant} updated.`);
+  }
+
+  function requestDelete(job: ImportJob, opener: HTMLButtonElement) {
+    deleteOpenerRef.current = opener;
+    deleteMutation.reset();
+    setDeleteTarget(job);
+  }
+
+  function dismissDelete() {
+    if (deleteMutation.isPending) return;
+    setDeleteTarget(null);
+    deleteMutation.reset();
+    requestAnimationFrame(() => {
+      if (deleteOpenerRef.current?.isConnected) {
+        deleteOpenerRef.current.focus({ preventScroll: true });
+      }
+    });
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget || deleteMutation.isPending) return;
+    const filename = displayStatementFilename(deleteTarget.original_filename);
+    const targetIndex = jobs.findIndex((job) => job.job_id === deleteTarget.job_id);
+    const remainingJobs = jobs.filter((job) => job.job_id !== deleteTarget.job_id);
+    const fallbackJob = remainingJobs[Math.min(targetIndex, remainingJobs.length - 1)] ?? null;
+    const fallbackIndex = fallbackJob
+      ? remainingJobs.findIndex((job) => job.job_id === fallbackJob.job_id)
+      : -1;
+
+    deleteMutation.mutate(deleteTarget.job_id, {
+      onSuccess: () => {
+        setRequestedJobId(fallbackJob?.job_id ?? null);
+        setImportPage(fallbackIndex >= 0 ? Math.floor(fallbackIndex / IMPORT_PAGE_SIZE) + 1 : 1);
+        setTransactionPageState({ jobId: fallbackJob?.job_id ?? null, page: 1 });
+        setEvidence(null);
+        setDeleteTarget(null);
+        setAnnouncement(`${filename} deleted.`);
+        toaster.create({
+          type: "success",
+          title: "Statement deleted",
+          description: `${filename} and its transactions were removed.`,
+          meta: { closable: true },
+        });
+        requestAnimationFrame(() => {
+          if (!fallbackJob) importButtonRef.current?.focus({ preventScroll: true });
+          else if (fallbackJob.status === "done") periodHeadingRef.current?.focus({ preventScroll: true });
+          else activityHeadingRef.current?.focus({ preventScroll: true });
+        });
+      },
+    });
   }
 
   function beginUpload(file: File) {
@@ -285,6 +342,7 @@ export function ProcessesScreen() {
                   setTransactionPageState({ jobId: selectedJobId, page: 1 });
                 }}
                 onChooseFileAgain={() => fileInputRef.current?.click()}
+                onDeleteRequest={requestDelete}
               />
             )}
             {importsQuery.isError && jobs.length > 0 && <InlineError message="Showing cached imports. The latest update could not be loaded." retry={() => void importsQuery.refetch()} />}
@@ -313,6 +371,14 @@ export function ProcessesScreen() {
         onDismiss={dismissChooser}
       />
       <ImportHandoff job={handoffJob} onDismiss={() => setHandoffJob(null)} onView={viewAcceptedJob} returnFocusRef={importButtonRef} />
+      <DeleteStatementDialog
+        job={deleteTarget}
+        transactionCount={deleteTarget?.job_id === selectedJobId ? transactionsQuery.data?.total ?? null : null}
+        deleting={deleteMutation.isPending}
+        error={deleteMutation.error}
+        onConfirm={confirmDelete}
+        onDismiss={dismissDelete}
+      />
       <p className={styles.srOnly} aria-live="polite">{announcement}</p>
     </Box>
   );

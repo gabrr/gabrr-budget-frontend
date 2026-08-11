@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 import { dashboardQueryKeys } from "@/features/dashboard/queries";
 
 import {
+  deleteImportJob,
   getImportJobs,
   getTransactions,
   patchTransaction,
@@ -147,6 +148,31 @@ export function useTransactions(importJobId: string | null) {
     enabled: importJobId !== null,
     staleTime: 30_000,
     retry: retryTransient,
+  });
+}
+
+export function useDeleteImportJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (jobId: string) => deleteImportJob(jobId),
+    onSuccess: (_, jobId) => {
+      queryClient.setQueriesData<ImportJob[]>(
+        { queryKey: [...processKeys.all, "imports"] },
+        (current) => current?.filter((job) => job.job_id !== jobId),
+      );
+      queryClient.removeQueries({
+        queryKey: processKeys.transactions(jobId),
+      });
+      void Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [...processKeys.all, "imports"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: dashboardQueryKeys.reports(),
+        }),
+      ]);
+    },
   });
 }
 

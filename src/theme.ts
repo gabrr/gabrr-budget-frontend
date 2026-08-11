@@ -85,6 +85,7 @@ const config = defineConfig({
         warningSoft: { value: "#fbf8f2" },
         danger: { value: "{colors.oxblood}" },
         dangerSoft: { value: "#fcf6f5" },
+        dangerBorder: { value: "#e8cecc" },
         "chip.bg": { value: "{colors.pane}" },
         "chip.bgHover": { value: "{colors.selected}" },
         "chip.border": { value: "{colors.rule}" },

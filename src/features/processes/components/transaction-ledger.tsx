@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@chakra-ui/react";
 import type { RefObject } from "react";
 
 import {
@@ -44,9 +45,10 @@ type Props = {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: TransactionPageSize) => void;
   onChooseFileAgain: () => void;
+  onDeleteRequest: (job: ImportJob, opener: HTMLButtonElement) => void;
 };
 
-export function TransactionLedger({ job, query, transactionPage, pageSize, evidence, activityHeadingRef, periodHeadingRef, ledgerScrollRef, onEvidence, onPageChange, onPageSizeChange, onChooseFileAgain }: Props) {
+export function TransactionLedger({ job, query, transactionPage, pageSize, evidence, activityHeadingRef, periodHeadingRef, ledgerScrollRef, onEvidence, onPageChange, onPageSizeChange, onChooseFileAgain, onDeleteRequest }: Props) {
   const allTransactions = query.data?.items ?? [];
   const total = allTransactions.length;
   const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -73,10 +75,22 @@ export function TransactionLedger({ job, query, transactionPage, pageSize, evide
               onClick={(event) => { rememberEvidenceOpener(event.currentTarget); onEvidence({ kind: "statement", job }); }}
             >
               <Ring value={confidencePercent(job.statement_kind_confidence) ?? 0} />
-              {statementKindLabel(job.statement_kind)} · {confidencePercent(job.statement_kind_confidence)}%
+              <span>{statementKindLabel(job.statement_kind)}</span>
+              <span className={styles.statementConfidenceValue}>{confidencePercent(job.statement_kind_confidence)}%</span>
             </button>
           )}
           {job.status === "done" ? null : <StatusBadge status={job.status} />}
+          {(job.status === "done" || job.status === "failed") && (
+            <Button
+              className={`${styles.button} ${styles.deleteStatementButton}`}
+              type="button"
+              aria-label={`Delete ${displayStatementFilename(job.original_filename)}`}
+              onClick={(event) => onDeleteRequest(job, event.currentTarget)}
+            >
+              <span className={styles.deleteStatementIcon} aria-hidden="true" />
+              <span>Delete</span>
+            </Button>
+          )}
         </div>
       </header>
 

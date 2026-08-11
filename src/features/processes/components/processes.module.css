@@ -157,6 +157,59 @@
   background: var(--pane);
   transform: none;
 }
+.main .destructiveButton {
+  border-color: rgb(139 74 70 / 25%);
+  background: var(--chakra-colors-danger-soft, #fcf6f5);
+  color: var(--chakra-colors-danger, var(--oxblood));
+}
+.main .destructiveButton:hover {
+  border-color: rgb(139 74 70 / 40%);
+  background: rgb(139 74 70 / 10%);
+}
+.main .deleteStatementButton {
+  position: relative;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 14px;
+  gap: 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--chakra-colors-danger, var(--oxblood));
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.main .deleteStatementButton::before {
+  content: "";
+  position: absolute;
+  inset: 3px 0;
+  border: 1px solid var(--chakra-colors-danger-border, #e8cecc);
+  border-radius: 10px;
+  background: var(--chakra-colors-danger-soft, #fcf6f5);
+  transition:
+    background 160ms,
+    border-color 160ms;
+}
+.main .deleteStatementButton:hover {
+  border-color: transparent;
+  background: transparent;
+}
+.main .deleteStatementButton:hover::before {
+  border-color: rgb(139 74 70 / 40%);
+  background: rgb(139 74 70 / 10%);
+}
+.deleteStatementButton > span {
+  position: relative;
+  z-index: 1;
+}
+.deleteStatementIcon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: url("/brand/icons/trash.svg") center / contain no-repeat;
+  mask: url("/brand/icons/trash.svg") center / contain no-repeat;
+}
 
 .workbench {
   display: grid;
@@ -492,8 +545,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 12px;
+  flex-wrap: nowrap;
 }
 .statementConfidence,
 .stateLabel {
@@ -507,19 +560,48 @@
   line-height: 1;
 }
 .statementConfidence {
-  gap: 7px;
-  border: 1px solid var(--rule);
-  background: var(--pane);
+  position: relative;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 9px;
+  gap: 6px;
+  border: 0;
+  background: transparent;
   font-weight: 560;
   transition:
     transform 160ms,
     background 160ms,
     border-color 160ms;
 }
+.statementConfidence::before {
+  content: "";
+  position: absolute;
+  inset: 8px 0;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  background: var(--pane);
+  transition:
+    background 160ms,
+    border-color 160ms;
+}
+.statementConfidence > * {
+  position: relative;
+  z-index: 1;
+}
+.statementConfidence .miniRing {
+  width: 10px;
+  height: 10px;
+}
+.statementConfidenceValue {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 .statementConfidence:hover {
+  background: transparent;
+}
+.statementConfidence:hover::before {
   border-color: #c1c3bf;
   background: var(--canvas);
-  transform: translateY(-1px);
 }
 .stateLabel {
   gap: 7px;
@@ -1224,6 +1306,35 @@
 .importDialog .statementScroll {
   max-height: calc(100dvh - 190px);
 }
+.deleteDialog {
+  width: min(460px, calc(100% - 32px));
+  overflow: hidden;
+}
+.deleteDialog[open] {
+  animation: handoffIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.deleteDialogBody {
+  padding: 22px 20px 24px;
+}
+.deleteDialogBody > p:first-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.deleteImpact {
+  margin: 18px 0 0;
+  padding: 14px;
+  border: 1px solid rgb(139 74 70 / 18%);
+  border-radius: 12px;
+  background: var(--chakra-colors-danger-soft, #fcf6f5);
+  color: var(--chakra-colors-danger, var(--oxblood));
+  font-size: 12px;
+  line-height: 1.45;
+}
+.deleteDialog .inspectorFooter {
+  grid-template-columns: 1fr 1.35fr;
+}
 .handoffDialog {
   width: min(650px, calc(100% - 32px));
   max-width: none;
@@ -1447,6 +1558,11 @@
   .fileContext .fileTitle {
     display: none;
   }
+  .fileActions {
+    width: 100%;
+    max-width: none;
+    justify-content: space-between;
+  }
   .inspector {
     right: 12px;
     width: min(410px, calc(100vw - 24px));
@@ -1495,12 +1611,11 @@
     align-items: flex-start;
   }
   .fileActions {
-    max-width: 170px;
+    width: 100%;
+    max-width: none;
+    justify-content: space-between;
   }
   .statementConfidence {
-    height: 34px;
-    min-height: 34px;
-    padding: 0 8px;
     font-size: 10.5px;
   }
   .stateLabel {
@@ -1623,9 +1738,13 @@
     padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
     grid-template-columns: 1fr;
   }
+  .deleteDialog .inspectorFooter {
+    grid-template-columns: 1fr;
+  }
   .importDialog,
   .handoffDialog {
     width: 100%;
+    max-width: 100%;
     max-height: calc(100dvh - 16px);
     margin: auto 0 0;
     border-radius: 22px 22px 0 0;
@@ -1688,8 +1807,8 @@
   }
   .fileActions {
     max-width: none;
-    margin-top: 10px;
-    justify-content: flex-start;
+    margin-top: 0;
+    flex-wrap: wrap;
   }
   .amountContext > span:first-child {
     display: none;
@@ -1872,7 +1991,11 @@
   .ledger,
   .statementCard,
   .facet,
-  .confidenceFacet {
+  .confidenceFacet,
+  .deleteDialog,
+  .deleteStatementButton,
+  .deleteStatementButton::before,
+  .destructiveButton {
     border-color: CanvasText;
   }
   .miniRing,

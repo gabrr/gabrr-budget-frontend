@@ -46,6 +46,26 @@ export async function getImportJobs(
   return response.json() as Promise<ImportJob[]>;
 }
 
+export async function deleteImportJob(
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  const response = await authenticatedFetch(`/import-jobs/${jobId}`, {
+    method: "DELETE",
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new ProcessApiError(
+      await responseError(
+        response,
+        `Could not delete statement (${response.status})`,
+      ),
+      response.status,
+    );
+  }
+}
+
 export async function getTransactions(
   params: TransactionsParams,
   signal?: AbortSignal,
