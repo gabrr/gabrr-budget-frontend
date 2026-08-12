@@ -31,8 +31,11 @@
 .main *::after {
   box-sizing: border-box;
 }
-.main button,
 .main select {
+  color: inherit;
+  font: inherit;
+}
+.main button:not(:global(.chakra-button)):not([data-scope="toggle"]) {
   color: inherit;
   font: inherit;
 }
@@ -157,60 +160,6 @@
   background: var(--pane);
   transform: none;
 }
-.main .destructiveButton {
-  border-color: rgb(139 74 70 / 25%);
-  background: var(--chakra-colors-danger-soft, #fcf6f5);
-  color: var(--chakra-colors-danger, var(--oxblood));
-}
-.main .destructiveButton:hover {
-  border-color: rgb(139 74 70 / 40%);
-  background: rgb(139 74 70 / 10%);
-}
-.main .deleteStatementButton {
-  position: relative;
-  height: 44px;
-  min-height: 44px;
-  padding: 0 14px;
-  gap: 8px;
-  border-color: transparent;
-  background: transparent;
-  color: var(--chakra-colors-danger, var(--oxblood));
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.main .deleteStatementButton::before {
-  content: "";
-  position: absolute;
-  inset: 3px 0;
-  border: 1px solid var(--chakra-colors-danger-border, #e8cecc);
-  border-radius: 10px;
-  background: var(--chakra-colors-danger-soft, #fcf6f5);
-  transition:
-    background 160ms,
-    border-color 160ms;
-}
-.main .deleteStatementButton:hover {
-  border-color: transparent;
-  background: transparent;
-}
-.main .deleteStatementButton:hover::before {
-  border-color: rgb(139 74 70 / 40%);
-  background: rgb(139 74 70 / 10%);
-}
-.deleteStatementButton > span {
-  position: relative;
-  z-index: 1;
-}
-.deleteStatementIcon {
-  width: 20px;
-  height: 20px;
-  flex: none;
-  background: currentColor;
-  -webkit-mask: url("/brand/icons/trash.svg") center / contain no-repeat;
-  mask: url("/brand/icons/trash.svg") center / contain no-repeat;
-}
-
 .workbench {
   display: grid;
   grid-template-columns: 330px minmax(0, 1fr);
@@ -346,91 +295,11 @@
   font-size: 10.5px;
   white-space: nowrap;
 }
-.kindMeter {
-  min-height: 25px;
-  padding: 0 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--pane);
-  color: var(--graphite);
-  font-size: 10px;
-  font-weight: 560;
-}
-.miniRing {
-  width: 12px;
-  height: 12px;
-  flex: none;
-  border-radius: 50%;
-  background: conic-gradient(
-    currentColor calc(var(--value) * 1%),
-    var(--rule-soft) 0
-  );
-  color: var(--horizon-deep);
-  -webkit-mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 3px),
-    #000 0
-  );
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
-}
-.jobStatus {
-  min-height: 25px;
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.jobStatus::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.pending {
-  border-color: rgb(47 111 126 / 20%);
-  background: rgb(47 111 126 / 6%);
-  color: var(--horizon-deep);
-}
-.processing {
-  border-color: rgb(138 100 47 / 20%);
-  background: rgb(138 100 47 / 7%);
-  color: var(--antique);
-}
-.failed {
-  border-color: rgb(139 74 70 / 20%);
-  background: rgb(139 74 70 / 7%);
-  color: var(--oxblood);
-}
-.done {
-  border-color: rgb(89 107 91 / 18%);
-  background: rgb(89 107 91 / 7%);
-  color: var(--evergreen);
-}
 .newBadge {
   position: absolute;
   z-index: 2;
   top: -5px;
   right: 7px;
-  min-height: 22px;
-  padding: 0 8px;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgb(47 111 126 / 22%);
-  border-radius: 999px;
-  background: #f5fafb;
-  box-shadow: 0 3px 10px rgb(47 111 126 / 8%);
-  color: var(--horizon-deep);
-  font-size: 9.5px;
-  font-weight: 700;
 }
 .clearingBadge {
   animation: clearBadge 220ms ease-out forwards;
@@ -548,92 +417,6 @@
   gap: 12px;
   flex-wrap: nowrap;
 }
-.statementConfidence,
-.stateLabel {
-  height: 38px;
-  min-height: 38px;
-  padding: 0 11px;
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  font-size: 11.5px;
-  line-height: 1;
-}
-.statementConfidence {
-  position: relative;
-  height: 44px;
-  min-height: 44px;
-  padding: 0 9px;
-  gap: 6px;
-  border: 0;
-  background: transparent;
-  font-weight: 560;
-  transition:
-    transform 160ms,
-    background 160ms,
-    border-color 160ms;
-}
-.statementConfidence::before {
-  content: "";
-  position: absolute;
-  inset: 8px 0;
-  border: 1px solid var(--rule-soft);
-  border-radius: 999px;
-  background: var(--pane);
-  transition:
-    background 160ms,
-    border-color 160ms;
-}
-.statementConfidence > * {
-  position: relative;
-  z-index: 1;
-}
-.statementConfidence .miniRing {
-  width: 10px;
-  height: 10px;
-}
-.statementConfidenceValue {
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-.statementConfidence:hover {
-  background: transparent;
-}
-.statementConfidence:hover::before {
-  border-color: #c1c3bf;
-  background: var(--canvas);
-}
-.stateLabel {
-  gap: 7px;
-  border: 1px solid rgb(89 107 91 / 18%);
-  background: rgb(89 107 91 / 7%);
-  color: var(--evergreen);
-  font-weight: 600;
-}
-.statusSignal {
-  position: relative;
-  isolation: isolate;
-  width: 8px;
-  height: 8px;
-  flex: none;
-  border-radius: 50%;
-  background: currentColor;
-}
-.statusSignal::before,
-.statusSignal::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: inherit;
-  background: currentColor;
-}
-.statusSignal::before {
-  opacity: 0.7;
-}
-.statusSignal::after {
-  opacity: 0.4;
-}
 .ledgerTools {
   min-height: 66px;
   padding: 10px 22px 13px 34px;
@@ -684,7 +467,7 @@
   margin: 0 14px 4px;
   padding: 0 8px 0 22px;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 110px 122px 82px 118px 38px;
+  grid-template-columns: minmax(220px, 1fr) 150px 82px 118px 38px;
   align-items: center;
   gap: 10px;
   border-radius: 10px;
@@ -732,7 +515,7 @@
   min-height: 50px;
   padding: 0 14px 0 28px;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 110px 122px 82px 118px 38px;
+  grid-template-columns: minmax(220px, 1fr) 150px 82px 118px 38px;
   align-items: center;
   gap: 10px;
   border: 0;
@@ -782,91 +565,6 @@
 }
 .classificationRail {
   display: contents;
-}
-.facet,
-.confidenceFacet {
-  --facet-surface: var(--pane);
-  min-width: 0;
-  height: 30px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: var(--facet-surface);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 72%);
-  color: var(--graphite);
-}
-.facet {
-  padding: 0 9px;
-  display: grid;
-  align-content: center;
-}
-.facetLabel {
-  display: none;
-}
-.facetValue {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 11.5px;
-  font-weight: 560;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.confidenceFacet {
-  --ring-color: var(--graphite);
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.confidenceNumber {
-  min-width: 31px;
-  text-align: left;
-}
-.confidenceGauge {
-  position: relative;
-  width: 15px;
-  height: 15px;
-  flex: none;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--ring-color) calc(var(--value) * 1%),
-    var(--rule) 0
-  );
-}
-.confidenceGauge::after {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  background: var(--facet-surface);
-  box-shadow: 0 0 0 0.5px rgb(255 255 255 / 78%);
-}
-.roleincome {
-  color: var(--evergreen);
-}
-.roleexcluded {
-  color: var(--muted);
-}
-.rolereview {
-  --facet-surface: #fcf6f5;
-  border-color: rgb(139 74 70 / 20%);
-  color: var(--oxblood);
-}
-.confidencemedium {
-  --facet-surface: #fbf8f2;
-  --ring-color: var(--antique);
-  border-color: rgb(138 100 47 / 22%);
-  color: var(--antique);
-}
-.confidencelow {
-  --facet-surface: #fcf6f5;
-  --ring-color: var(--oxblood);
-  border-color: rgb(139 74 70 / 22%);
-  color: var(--oxblood);
 }
 .amount {
   justify-self: end;
@@ -1156,15 +854,6 @@
   font-weight: 580;
   letter-spacing: -0.03em;
 }
-.closeButton {
-  width: 44px;
-  height: 44px;
-  flex: none;
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-  background: var(--canvas);
-  font-size: 19px;
-}
 .inspectorBody {
   padding: 20px;
   overflow: auto;
@@ -1289,9 +978,6 @@
   border-top: 1px solid var(--rule-soft);
   background: var(--canvas);
 }
-.inspectorFooter button {
-  min-height: 44px;
-}
 .importDialog {
   width: min(620px, calc(100% - 24px));
   max-height: calc(100dvh - 24px);
@@ -1378,18 +1064,6 @@
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
-}
-.handoffClose {
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  font-size: 22px;
-}
-.handoffClose:hover {
-  background: var(--pane);
 }
 .pipelineIntro {
   margin: 24px 0 0;
@@ -1492,10 +1166,10 @@
   }
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 1279px) {
   .tableHead,
   .transactionRow {
-    grid-template-columns: minmax(170px, 1fr) 96px 110px 76px 106px 36px;
+    grid-template-columns: minmax(170px, 1fr) 132px 76px 106px 36px;
     gap: 8px;
   }
 }
@@ -1601,9 +1275,7 @@
     height: 20px;
   }
   .statementTime,
-  .statementMeta,
-  .kindMeter,
-  .jobStatus {
+  .statementMeta {
     font-size: 12px;
   }
   .fileContext {
@@ -1614,15 +1286,6 @@
     width: 100%;
     max-width: none;
     justify-content: space-between;
-  }
-  .statementConfidence {
-    font-size: 10.5px;
-  }
-  .stateLabel {
-    display: none;
-  }
-  .ledger[data-mode="activity"] .stateLabel {
-    display: inline-flex;
   }
   .ledgerTools {
     padding: 11px 14px;
@@ -1657,47 +1320,8 @@
   .classificationRail {
     grid-area: facets;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) 72px;
+    grid-template-columns: minmax(0, 1fr) 72px;
     gap: 6px;
-  }
-  .facet,
-  .confidenceFacet {
-    height: 34px;
-    padding: 3px 7px;
-    display: grid;
-    align-content: center;
-  }
-  .facetLabel {
-    display: block;
-    overflow: hidden;
-    margin-bottom: 1px;
-    color: var(--muted);
-    font-size: 8.5px;
-    font-weight: 600;
-    line-height: 1;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .facetValue {
-    font-size: 10.5px;
-  }
-  .confidenceFacet {
-    grid-template-columns: 1fr auto;
-    grid-template-areas: "label label" "value gauge";
-    gap: 1px 5px;
-  }
-  .confidenceFacet .facetLabel {
-    grid-area: label;
-  }
-  .confidenceNumber {
-    grid-area: value;
-    min-width: 0;
-    font-size: 10.5px;
-  }
-  .confidenceGauge {
-    grid-area: gauge;
-    width: 13px;
-    height: 13px;
   }
   .amount {
     grid-area: amount;
@@ -1817,47 +1441,13 @@
     grid-template-columns: minmax(0, 1fr) auto 32px;
   }
   .classificationRail {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) 68px;
+    grid-template-columns: minmax(0, 1fr) 68px;
   }
   .amount {
     font-size: 12px;
   }
 }
 
-@keyframes statusCore {
-  0%,
-  100% {
-    transform: scale(0.86);
-  }
-  48% {
-    transform: scale(1.14);
-  }
-  66% {
-    transform: scale(1.02);
-  }
-}
-@keyframes statusNear {
-  0% {
-    opacity: 0.7;
-    transform: scale(0.9);
-  }
-  68%,
-  100% {
-    opacity: 0;
-    transform: scale(2.25);
-  }
-}
-@keyframes statusFar {
-  0% {
-    opacity: 0.4;
-    transform: scale(0.8);
-  }
-  76%,
-  100% {
-    opacity: 0;
-    transform: scale(3.05);
-  }
-}
 @keyframes panelIn {
   from {
     opacity: 0;
@@ -1936,17 +1526,6 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .processing .statusSignal {
-    animation: statusCore 2.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
-  }
-  .processing .statusSignal::before {
-    animation: statusNear 2.6s cubic-bezier(0.18, 0.75, 0.3, 1) infinite;
-  }
-  .processing .statusSignal::after {
-    animation: statusFar 2.6s cubic-bezier(0.18, 0.75, 0.3, 1) 0.48s infinite;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .main *,
   .main *::before,
@@ -1990,26 +1569,7 @@
   .statements,
   .ledger,
   .statementCard,
-  .facet,
-  .confidenceFacet,
-  .deleteDialog,
-  .deleteStatementButton,
-  .deleteStatementButton::before,
-  .destructiveButton {
+  .deleteDialog {
     border-color: CanvasText;
-  }
-  .miniRing,
-  .confidenceGauge {
-    background: currentColor;
-    -webkit-mask: none;
-    mask: none;
-  }
-  .facet,
-  .confidenceFacet {
-    background: Canvas;
-    box-shadow: none;
-  }
-  .confidenceGauge::after {
-    background: Canvas;
   }
 }

@@ -1,9 +1,16 @@
 "use client";
 
-import { Button, Field } from "@chakra-ui/react";
-import Image from "next/image";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Field } from "@chakra-ui/react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 
+import { ActionButton, IconActionButton } from "@/components/actions";
+import { PassiveChip } from "@/components/chips";
 import {
   confidencePercent,
   displayStatementFilename,
@@ -116,15 +123,12 @@ export function TransactionInspector({
           <span>{transaction ? "Transaction details" : "Statement detection"}</span>
           <h2 id="inspector-title">{title}</h2>
         </div>
-        <button
+        <IconActionButton
           ref={closeRef}
-          className={styles.closeButton}
-          type="button"
           aria-label="Close inspector"
+          icon="/brand/icons/x.svg"
           onClick={close}
-        >
-          <Image src="/brand/icons/x.svg" alt="" width={20} height={20} />
-        </button>
+        />
       </header>
       {transaction && jobId ? (
         <TransactionEditor
@@ -164,6 +168,15 @@ function TransactionEditor({
   const [nature, setNature] = useState<TransactionNature>(initialNature);
   const mutation = usePatchTransaction();
   const dirty = reportRole !== initialRole || nature !== initialNature;
+  const provenance = transaction.classification_source === "user"
+    ? {
+        label: "User override",
+        icon: "/brand/icons/pencil-simple.svg",
+      }
+    : {
+        label: "System",
+        icon: "/brand/icons/plugs-connected.svg",
+      };
 
   function dirtyPatch(): TransactionPatch {
     return {
@@ -238,7 +251,10 @@ function TransactionEditor({
           <Fact label="Imported text" value={transaction.description || "Unavailable"} />
           <Fact label="Date" value={formatTransactionDate(transaction)} />
           <Fact label="Classification" value={confidence === null ? "Not assessed" : `${confidence}%`} />
-          <Fact label="Source" value={transaction.classification_source === "user" ? "User override" : titleCase(transaction.classification_source, "System")} />
+          <Fact
+            label="Source"
+            value={<PassiveChip label={provenance.label} icon={provenance.icon} />}
+          />
         </dl>
         <section className={styles.reason}>
           <h3>Why this classification</h3>
@@ -248,14 +264,14 @@ function TransactionEditor({
         {mutationError ? <p className={styles.inspectorError} role="alert">{mutationError}</p> : null}
       </div>
       <footer className={styles.inspectorFooter}>
-        <Button
+        <ActionButton
           type="submit"
-          variant="outline"
           disabled={!dirty || mutation.isPending}
           loading={mutation.isPending}
+          icon="/brand/icons/check.svg"
         >
           Save changes
-        </Button>
+        </ActionButton>
       </footer>
     </form>
   );
@@ -290,7 +306,7 @@ function StatementEvidence({
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Fact({ label, value }: { label: string; value: ReactNode }) {
   return <div><dt>{label}</dt><dd>{value}</dd></div>;
 }
 

@@ -3,6 +3,7 @@
 import { useEffect, useRef, type CSSProperties, type RefObject } from "react";
 import Image from "next/image";
 
+import { ActionButton, IconActionButton } from "@/components/actions";
 import { displayStatementFilename } from "../mappers";
 import type { ImportJob } from "../types";
 import styles from "./processes.module.css";
@@ -49,9 +50,11 @@ export function ImportHandoff({ job, onDismiss, onView, returnFocusRef }: { job:
             <p className={styles.handoffFilename}>{displayStatementFilename(job.original_filename)}</p>
             <p className={styles.handoffDescription} id="handoff-description">Acetate will prepare it in the background.</p>
           </div>
-          <button className={styles.handoffClose} type="button" aria-label="Close import explanation" onClick={() => close()}>
-            <Image src="/brand/icons/x.svg" alt="" width={20} height={20} />
-          </button>
+          <IconActionButton
+            aria-label="Close import explanation"
+            icon="/brand/icons/x.svg"
+            onClick={() => close()}
+          />
         </header>
         <div className={styles.pipelineIntro}><span>What to expect</span><p>A quick preview of how Acetate will prepare your file.</p></div>
         <ol className={styles.pipeline} aria-label="What Acetate will do next">
@@ -65,8 +68,8 @@ export function ImportHandoff({ job, onDismiss, onView, returnFocusRef }: { job:
         </ol>
         <p className={styles.handoffBasis}>Follow the actual status in Statements.</p>
         <footer className={styles.handoffFooter}>
-          <button className={`${styles.button} ${styles.quietButton}`} type="button" onClick={() => close()}>Close</button>
-          <button className={`${styles.button} ${styles.primaryButton}`} type="button" onClick={() => { close(false); onView(); }}>View in Statements</button>
+          <ActionButton tone="secondary" onClick={() => close()}>Close</ActionButton>
+          <ActionButton onClick={() => { close(false); onView(); }}>View in Statements</ActionButton>
         </footer>
       </div>
     </dialog>

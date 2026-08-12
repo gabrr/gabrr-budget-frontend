@@ -31,6 +31,9 @@ const config = defineConfig({
         evergreen: { value: "#596b5b" },
         antique: { value: "#8a642f" },
         oxblood: { value: "#8b4a46" },
+        cashFixed: { value: "#313944" },
+        cashVariable: { value: "#627693" },
+        cashDebt: { value: "#6f2935" },
       },
       fonts: {
         interface: {
@@ -91,6 +94,10 @@ const config = defineConfig({
         "chip.border": { value: "{colors.rule}" },
         "chip.borderHover": { value: "{colors.ink}" },
         "chip.text": { value: "{colors.ink}" },
+        "chip.filter": { value: "{colors.graphite}" },
+        "chip.filterSelected": { value: "{colors.horizonDeep}" },
+        "chip.disabledBg": { value: "{colors.ruleSoft}" },
+        "chip.disabledText": { value: "{colors.muted}" },
       },
     },
     layerStyles: {

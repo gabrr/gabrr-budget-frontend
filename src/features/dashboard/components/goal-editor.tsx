@@ -1,15 +1,10 @@
 "use client";
 
-import {
-  Button,
-  Field,
-  Input,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Field, Input, Stack, Text } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
+import { ActionButton, IconActionButton } from "@/components/actions";
 import { DashboardApiError } from "../api";
 import { formatMoney } from "../model";
 import type { GoalScenario, ScenarioBasis, WealthCheckpoint } from "../types";
@@ -154,9 +149,11 @@ export function GoalEditor({
             <span>Retirement goal</span>
             <h2 id="goal-editor-title">Edit goal</h2>
           </div>
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-            Close
-          </Button>
+          <IconActionButton
+            aria-label="Close goal editor"
+            icon="/brand/icons/x.svg"
+            onClick={onClose}
+          />
         </header>
 
         <div className={styles.panelScroll}>
@@ -289,12 +286,11 @@ export function GoalEditor({
                             <span>{date}</span>
                           </div>
                           {!isConfirming ? (
-                            <Button
+                            <ActionButton
                               id={`delete-checkpoint-${checkpointItem.id}`}
+                              tone="danger"
+                              icon="/brand/icons/trash.svg"
                               type="button"
-                              size="xs"
-                              variant="ghost"
-                              color="danger"
                               disabled={deletingCheckpointId !== null}
                               onClick={() => {
                                 setConfirmingCheckpointId(checkpointItem.id);
@@ -302,7 +298,7 @@ export function GoalEditor({
                               }}
                             >
                               Delete
-                            </Button>
+                            </ActionButton>
                           ) : null}
                         </div>
                         {isConfirming ? (
@@ -313,21 +309,19 @@ export function GoalEditor({
                           >
                             <p>Delete the {amount} checkpoint from {date}?</p>
                             <div>
-                              <Button
+                              <ActionButton
                                 id={`confirm-delete-${checkpointItem.id}`}
+                                tone="danger"
+                                icon="/brand/icons/trash.svg"
                                 type="button"
-                                size="xs"
-                                background="#8b4a46"
-                                color="#fff"
                                 loading={deletingCheckpointId === checkpointItem.id}
                                 onClick={() => { void handleDelete(checkpointItem); }}
                               >
                                 Yes, delete
-                              </Button>
-                              <Button
+                              </ActionButton>
+                              <ActionButton
+                                tone="secondary"
                                 type="button"
-                                size="xs"
-                                variant="ghost"
                                 disabled={deletingCheckpointId === checkpointItem.id}
                                 onClick={() => {
                                   setConfirmingCheckpointId(null);
@@ -335,7 +329,7 @@ export function GoalEditor({
                                 }}
                               >
                                 Cancel
-                              </Button>
+                              </ActionButton>
                             </div>
                           </div>
                         ) : null}
@@ -356,27 +350,24 @@ export function GoalEditor({
         </div>
 
         <footer className={styles.panelActions}>
-          <Button
+          <ActionButton
+            tone="secondary"
             type="button"
             width="full"
-            variant="outline"
             disabled={!isAgeValid || isSaving}
             onClick={applyPreview}
           >
             Apply preview
-          </Button>
-          <Button
+          </ActionButton>
+          <ActionButton
             type="submit"
             width="full"
-            background="#101010"
-            color="#ffffff"
-            _hover={{ background: "#292929" }}
-            _disabled={{ cursor: "not-allowed", opacity: 0.55 }}
+            icon="/brand/icons/check.svg"
             loading={isSaving}
             disabled={!isAgeValid || !isCheckpointValid}
           >
             Save assumptions/checkpoint
-          </Button>
+          </ActionButton>
         </footer>
       </form>
     </dialog>

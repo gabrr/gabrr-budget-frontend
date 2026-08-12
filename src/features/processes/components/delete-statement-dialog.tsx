@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@chakra-ui/react";
 import { useEffect, useRef } from "react";
 
+import { ActionButton } from "@/components/actions";
 import { ProcessApiError } from "../api";
 import { displayStatementFilename } from "../mappers";
 import type { ImportJob } from "../types";
@@ -95,24 +95,25 @@ export function DeleteStatementDialog({
         {errorMessage && <p className={styles.inspectorError} role="alert">{errorMessage}</p>}
       </div>
       <footer className={styles.inspectorFooter}>
-        <Button
+        <ActionButton
           ref={cancelRef}
-          className={styles.button}
+          tone="secondary"
           type="button"
           disabled={deleting}
           onClick={close}
         >
           Cancel
-        </Button>
-        <Button
-          className={`${styles.button} ${styles.destructiveButton}`}
+        </ActionButton>
+        <ActionButton
+          tone="danger"
+          icon="/brand/icons/trash.svg"
           type="button"
           loading={deleting}
           loadingText="Deleting…"
           onClick={onConfirm}
         >
           Delete statement
-        </Button>
+        </ActionButton>
       </footer>
     </dialog>
   );

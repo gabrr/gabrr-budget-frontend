@@ -1,10 +1,15 @@
 "use client";
 
-import { Button } from "@chakra-ui/react";
 import type { RefObject } from "react";
 
+import { ActionButton } from "@/components/actions";
 import {
-  classificationTone,
+  ConfidenceChip,
+  ConfidenceRing,
+  DisclosureChip,
+  PassiveChip,
+} from "@/components/chips";
+import {
   confidencePercent,
   displayStatementFilename,
   formatAmount,
@@ -14,8 +19,6 @@ import {
   periodFromTransactions,
   roleTone,
   statementKindLabel,
-  statusLabel,
-  titleCase,
   transactionTitle,
 } from "../mappers";
 import { useTransactions } from "../queries";
@@ -25,7 +28,9 @@ import type {
   Transaction,
 } from "../types";
 import { ImportActivity } from "./import-activity";
-import { LedgerState, Ring } from "./process-states";
+import { jobStatusChip } from "./process-chip-meta";
+import { LedgerState } from "./process-states";
+import { ReportRoleChip, reportRoleLabel } from "./report-role-chip";
 import { rememberEvidenceOpener } from "./transaction-inspector";
 import styles from "./processes.module.css";
 
@@ -66,30 +71,27 @@ export function TransactionLedger({ job, query, transactionPage, pageSize, evide
         </div>
         <div className={styles.fileActions}>
           {confidencePercent(job.statement_kind_confidence) !== null && (
-            <button
-              className={styles.statementConfidence}
-              type="button"
+            <DisclosureChip
               aria-haspopup="dialog"
               aria-controls="process-evidence"
               aria-expanded={evidence?.kind === "statement"}
+              leading={<ConfidenceRing value={confidencePercent(job.statement_kind_confidence)} />}
+              label={statementKindLabel(job.statement_kind)}
+              meta={`${confidencePercent(job.statement_kind_confidence)}%`}
               onClick={(event) => { rememberEvidenceOpener(event.currentTarget); onEvidence({ kind: "statement", job }); }}
-            >
-              <Ring value={confidencePercent(job.statement_kind_confidence) ?? 0} />
-              <span>{statementKindLabel(job.statement_kind)}</span>
-              <span className={styles.statementConfidenceValue}>{confidencePercent(job.statement_kind_confidence)}%</span>
-            </button>
+            />
           )}
           {job.status === "done" ? null : <StatusBadge status={job.status} />}
           {(job.status === "done" || job.status === "failed") && (
-            <Button
-              className={`${styles.button} ${styles.deleteStatementButton}`}
+            <ActionButton
+              tone="danger"
+              icon="/brand/icons/trash.svg"
               type="button"
               aria-label={`Delete ${displayStatementFilename(job.original_filename)}`}
               onClick={(event) => onDeleteRequest(job, event.currentTarget)}
             >
-              <span className={styles.deleteStatementIcon} aria-hidden="true" />
-              <span>Delete</span>
-            </Button>
+              Delete
+            </ActionButton>
           )}
         </div>
       </header>
@@ -102,7 +104,7 @@ export function TransactionLedger({ job, query, transactionPage, pageSize, evide
               <AmountContext kind={job.statement_kind} />
             </div>
             <div className={styles.tableHead} aria-hidden="true">
-              <span>Transaction</span><span>Category</span><span>Report role</span><span>Confidence</span>
+              <span>Transaction</span><span>Report role</span><span>Confidence</span>
               <span>{job.statement_kind === "credit_card" ? "Added to invoice" : "Account movement"}</span><span />
             </div>
           </div>
@@ -137,7 +139,8 @@ export function TransactionLedger({ job, query, transactionPage, pageSize, evide
 }
 
 function StatusBadge({ status }: { status: string }) {
-  return <span className={`${styles.stateLabel} ${styles[status] ?? ""}`}><span className={styles.statusSignal} aria-hidden="true" /><span>{statusLabel(status)}</span></span>;
+  const meta = jobStatusChip(status);
+  return <PassiveChip label={meta.label} tone={meta.tone} icon={meta.icon} />;
 }
 
 function AmountContext({ kind }: { kind: string }) {
@@ -165,19 +168,22 @@ function TransactionBody({ query, items, statementKind, emptyLabel, onOpen, acti
 
 function TransactionRow({ transaction, statementKind, expanded, onOpen }: { transaction: Transaction; statementKind: string; expanded: boolean; onOpen: (transaction: Transaction, opener: HTMLButtonElement) => void }) {
   const confidence = confidencePercent(transaction.classification_confidence);
-  const role = titleCase(transaction.report_bucket);
-  const category = titleCase(transaction.category);
+  const role = reportRoleLabel(transaction.report_bucket);
   const title = transactionTitle(transaction);
   const amount = formatAmount(transaction);
   const tone = roleTone(transaction.report_bucket);
   return (
     <li className={styles.transactionItem}>
-      <button className={styles.transactionRow} type="button" aria-haspopup="dialog" aria-controls="process-evidence" aria-expanded={expanded} aria-label={`View ${title}: category ${category}, report role ${role}, ${confidence ?? "unknown"}% confidence, ${amount}`} onClick={(event) => onOpen(transaction, event.currentTarget)}>
+      <button className={styles.transactionRow} type="button" aria-haspopup="dialog" aria-controls="process-evidence" aria-expanded={expanded} aria-label={`View ${title}: report role ${role}, ${confidence ?? "unknown"}% confidence, ${amount}`} onClick={(event) => onOpen(transaction, event.currentTarget)}>
         <span className={styles.merchantButton}><strong>{title}</strong>{transaction.description && transaction.description !== title.toUpperCase() && <span>{transaction.description}</span>}</span>
         <span className={styles.classificationRail}>
-          <span className={`${styles.facet} ${styles.facetCategory}`} title={`Category: ${category}`}><span className={styles.facetLabel}>Category</span><strong className={styles.facetValue}>{category}</strong></span>
-          <span className={`${styles.facet} ${styles.facetRole} ${styles[`role${tone}`] ?? ""}`} title={`Report role: ${role}`}><span className={styles.facetLabel}>Report role</span><strong className={styles.facetValue}>{role}</strong></span>
-          <span className={`${styles.confidenceFacet} ${styles[`confidence${classificationTone(transaction.classification_confidence)}`] ?? ""}`} aria-label={confidence === null ? "Classification confidence unavailable" : `Classification confidence ${confidence} percent`}><span className={styles.facetLabel}>Confidence</span><span className={styles.confidenceNumber}>{confidence === null ? "N/A" : `${confidence}%`}</span><span className={styles.confidenceGauge} style={{ "--value": confidence ?? 0 } as React.CSSProperties} aria-hidden="true" /></span>
+          <ReportRoleChip value={transaction.report_bucket} />
+          <ConfidenceChip
+            value={confidence}
+            label={confidence === null ? "N/A" : `${confidence}%`}
+            aria-label={confidence === null ? "Classification confidence unavailable" : `Classification confidence ${confidence} percent`}
+            justifySelf="start"
+          />
         </span>
         <strong className={`${styles.amount} ${tone === "income" ? styles.amountIncome : tone === "excluded" ? styles.amountExcluded : statementKind === "credit_card" ? styles.amountCredit : ""}`}>{amount}</strong>
         <span className={styles.inspectButton} aria-hidden="true" />

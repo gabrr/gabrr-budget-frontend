@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import Image from "next/image";
 
+import { IconActionButton } from "@/components/actions";
+import { ConfidenceChip, PassiveChip } from "@/components/chips";
 import {
   confidencePercent,
   displayStatementFilename,
   formatJobDay,
   formatJobMonth,
   formatJobTime,
-  statusLabel,
   statementKindLabel,
 } from "../mappers";
 import type { ImportJob } from "../types";
-import { Ring } from "./process-states";
+import { jobStatusChip } from "./process-chip-meta";
 import styles from "./processes.module.css";
 
 export const IMPORT_PAGE_SIZE = 6;
@@ -56,14 +56,14 @@ export function StatementGroups({ jobs, selectedJobId, newJobIds, clearingJobId,
                 const confidence = confidencePercent(job.statement_kind_confidence);
                 const isNew = newJobIds.has(job.job_id) && job.status === "done";
                 const filename = displayStatementFilename(job.original_filename);
-                const visibleStatus = job.status === "done" ? null : statusLabel(job.status);
+                const statusMeta = job.status === "done" ? null : jobStatusChip(job.status);
                 return (
                   <li key={job.job_id}>
                     <button
                       className={styles.statementCard}
                       type="button"
                       aria-current={job.job_id === selectedJobId}
-                      aria-label={[filename, isNew ? "New" : null, visibleStatus].filter(Boolean).join(", ")}
+                      aria-label={[filename, isNew ? "New" : null, statusMeta?.label].filter(Boolean).join(", ")}
                       onClick={() => onSelect(job)}
                     >
                       <time className={styles.statementTime}>{formatJobTime(job)}</time>
@@ -71,15 +71,25 @@ export function StatementGroups({ jobs, selectedJobId, newJobIds, clearingJobId,
                         <strong>{filename}</strong>
                         {confidence !== null && (
                           <span className={styles.statementMeta}>
-                            <span className={styles.kindMeter}><Ring value={confidence} />{statementKindLabel(job.statement_kind)} {confidence}%</span>
+                            <ConfidenceChip
+                              value={confidence}
+                              label={`${statementKindLabel(job.statement_kind)} ${confidence}%`}
+                            />
                           </span>
                         )}
                       </span>
                       {isNew && (
-                        <span className={`${styles.newBadge} ${clearingJobId === job.job_id ? styles.clearingBadge : ""}`}>New</span>
+                        <PassiveChip
+                          className={`${styles.newBadge} ${clearingJobId === job.job_id ? styles.clearingBadge : ""}`}
+                          label="New"
+                        />
                       )}
-                      {visibleStatus ? (
-                        <span className={`${styles.jobStatus} ${styles[job.status] ?? ""}`}>{visibleStatus}</span>
+                      {statusMeta ? (
+                        <PassiveChip
+                          label={statusMeta.label}
+                          tone={statusMeta.tone}
+                          icon={statusMeta.icon}
+                        />
                       ) : null}
                     </button>
                   </li>
@@ -142,7 +152,11 @@ export function StatementChooser({ open, page, pages, count, onPageChange, onDis
     >
       <header className={styles.inspectorHeading}>
         <div><span>Import activity</span><h2 id="chooser-title">Choose a statement</h2></div>
-        <button className={styles.closeButton} type="button" aria-label="Close statements" onClick={() => ref.current?.close()}><Image src="/brand/icons/x.svg" alt="" width={20} height={20} /></button>
+        <IconActionButton
+          aria-label="Close statements"
+          icon="/brand/icons/x.svg"
+          onClick={() => ref.current?.close()}
+        />
       </header>
       <div className={styles.statementScroll}>
         {props.jobs.length ? <StatementGroups {...props} /> : <PanelState>No statement imports yet.</PanelState>}

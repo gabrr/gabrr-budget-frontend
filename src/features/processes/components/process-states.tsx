@@ -75,16 +75,6 @@ export function ErrorLedger({
   );
 }
 
-export function Ring({ value }: { value: number }) {
-  return (
-    <span
-      className={styles.miniRing}
-      style={{ "--value": value } as React.CSSProperties}
-      aria-hidden="true"
-    />
-  );
-}
-
 export function UploadIcon() {
   return (
     <Image

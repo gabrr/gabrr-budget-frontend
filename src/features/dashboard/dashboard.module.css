@@ -529,7 +529,6 @@
 .checkpointDeleteError { margin: 8px 0 0; color: var(--oxblood); font-size: 11px; line-height: 1.4; }
 .formError { margin-top: 16px; padding: 12px; border-radius: 10px; background: #fff0ee; color: var(--oxblood); font-size: 12px; }
 .panelActions { padding-top: 18px; display: grid; grid-template-columns: .8fr 1.2fr; gap: 8px; border-top: 1px solid var(--rule-soft); background: rgb(255 255 255 / .95); }
-.panelActions button { min-height: 44px; }
 .dashboardFreshness { min-height: 20px; display: flex; justify-content: flex-end; gap: 10px; color: var(--muted); font-size: 12px; }
 .dashboardFreshness span + span { color: var(--horizon-deep); }
 .goalStatus { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--pane); color: var(--muted); font-size: 12px; line-height: 1.45; }
