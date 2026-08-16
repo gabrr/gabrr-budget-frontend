@@ -455,7 +455,7 @@
 .sidePanel[open] { animation: panelIn 320ms cubic-bezier(.22, 1, .36, 1) forwards; }
 .sidePanel form { height: 100%; min-height: 0; padding: 28px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
 .layerHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-.layerHeading span { color: var(--muted); font-size: 12px; }
+.layerHeading > div > span { color: var(--muted); font-size: 12px; }
 .layerHeading h2 { margin: 5px 0 0; font-size: 27px; font-weight: 650; letter-spacing: -.035em; }
 .panelScroll { min-height: 0; margin: 0 -10px; padding: 0 10px 18px; overflow-y: auto; overscroll-behavior: contain; }
 .panelSection { margin-top: 24px; }
@@ -519,9 +519,9 @@
 .checkpointList > li { padding: 11px 14px; border-top: 1px solid var(--rule-soft); }
 .checkpointRow { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .checkpointRow strong,
-.checkpointRow span { display: block; }
+.checkpointRow > div > span { display: block; }
 .checkpointRow strong { font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.checkpointRow span { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.checkpointRow > div > span { margin-top: 3px; color: var(--muted); font-size: 10px; }
 .checkpointListEmpty { margin: 0; padding: 16px 14px; border-top: 1px solid var(--rule-soft); color: var(--muted); font-size: 11px; }
 .deleteConfirmation { margin-top: 8px; padding: 11px; border: 1px solid #e4c7c3; border-radius: 9px; background: #fff8f7; }
 .deleteConfirmation p { margin: 0; color: var(--oxblood); font-size: 11px; line-height: 1.4; }
